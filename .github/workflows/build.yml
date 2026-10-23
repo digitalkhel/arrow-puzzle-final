@@ -69,8 +69,11 @@ jobs:
             sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n    </application>|g' "$MANIFEST"
           fi
 
+          # Remove the XML-only adaptive icon folder to prevent Duplicate Resources error
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+
           if [ -f "www/Arrow puzzle logo.png" ]; then
-            for dir in android/app/src/main/res/mipmap-*; do
+            for dir in android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
               cp "www/Arrow puzzle logo.png" "$dir/ic_launcher.png" 2>/dev/null || true
               cp "www/Arrow puzzle logo.png" "$dir/ic_launcher_round.png" 2>/dev/null || true
               cp "www/Arrow puzzle logo.png" "$dir/ic_launcher_foreground.png" 2>/dev/null || true
