@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Prepare Web Assets and Capacitor Android
+      - name: Prepare Web Assets and Capacitor Android with AdMob
         run: |
           mkdir -p www
           cp index.html www/index.html
@@ -34,12 +34,13 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.0",
+            "version": "1.0.4",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
               "@capacitor/cli": "^6.0.0",
-              "@capacitor/android": "^6.0.0"
+              "@capacitor/android": "^6.0.0",
+              "@capacitor-community/admob": "^6.0.0"
             }
           }
           EOF
@@ -56,9 +57,9 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Fix API Level 36, minSdkVersion 24, AD_ID, AdMob & Meta IDs
+      - name: Configure Fullscreen Immersive Mode, AdMob, Billing & SDK 36
         run: |
-          # 1. Update minSdkVersion to 24 and targetSdkVersion / compileSdkVersion to 36
+          # 1. Set minSdkVersion 24 & targetSdkVersion 36
           VARS="android/variables.gradle"
           if [ -f "$VARS" ]; then
             sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 24/g' "$VARS"
@@ -66,30 +67,66 @@ jobs:
             sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' "$VARS"
           fi
 
-          # 2. Bump versionCode to 3 in app/build.gradle
+          # 2. Bump versionCode to 5 and add Google Play Billing library in app/build.gradle
           APP_GRADLE="android/app/build.gradle"
           if [ -f "$APP_GRADLE" ]; then
-            sed -i 's/versionCode 1/versionCode 3/g' "$APP_GRADLE"
-            sed -i 's/versionName "1.0"/versionName "1.0.2"/g' "$APP_GRADLE"
+            sed -i 's/versionCode 1/versionCode 5/g' "$APP_GRADLE"
+            sed -i 's/versionName "1.0"/versionName "1.0.4"/g' "$APP_GRADLE"
+            sed -i 's|dependencies {|dependencies {\n    implementation "com.android.billingclient:billing:7.0.0"|g' "$APP_GRADLE"
           fi
 
           # 3. Allow AndroidX libraries to compile smoothly with SDK 36
           echo "android.suppressUnsupportedCompileSdk=36" >> android/gradle.properties
 
-          # 4. Add Meta IDs to strings.xml
+          # 4. Enable Sticky Immersive Full-Screen Mode in MainActivity.java (Hides Status & Nav Bars until swipe!)
+          cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/MainActivity.java
+          package com.digitalkhel.arrowpuzzle;
+
+          import android.os.Bundle;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  hideSystemBars();
+              }
+
+              @Override
+              public void onWindowFocusChanged(boolean hasFocus) {
+                  super.onWindowFocusChanged(hasFocus);
+                  if (hasFocus) {
+                      hideSystemBars();
+                  }
+              }
+
+              private void hideSystemBars() {
+                  WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+                  if (controller != null) {
+                      controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                      controller.hide(WindowInsetsCompat.Type.systemBars());
+                  }
+              }
+          }
+          EOF
+
+          # 5. Add Meta IDs to strings.xml
           STRINGS="android/app/src/main/res/values/strings.xml"
           if [ -f "$STRINGS" ]; then
             sed -i 's|</resources>|    <string name="facebook_app_id">953250167441885</string>\n    <string name="facebook_client_token">d5435ea514ff2a885c8d48939832af0f</string>\n</resources>|g' "$STRINGS"
           fi
 
-          # 5. Add AD_ID Permission + AdMob & Meta Metadata to AndroidManifest.xml
+          # 6. Add AD_ID + BILLING Permissions + AdMob & Meta Metadata to AndroidManifest.xml
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
-            sed -i 's|<application|    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    <application|g' "$MANIFEST"
+            sed -i 's|<application|    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    <uses-permission android:name="com.android.vending.BILLING"/>\n    <application|g' "$MANIFEST"
             sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n    </application>|g' "$MANIFEST"
           fi
 
-          # 6. Set App Icon cleanly
+          # 7. Set App Icon cleanly
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           if [ -f "www/Arrow puzzle logo.png" ]; then
             for dir in android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
@@ -117,7 +154,7 @@ jobs:
       - name: Upload Signed AAB & APK
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-Release-v4
+          name: Digital-Khel-Arrow-Puzzle-Release-v5-FullFix
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/debug/*.apk
