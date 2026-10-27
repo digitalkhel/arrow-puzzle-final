@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Arrow Puzzle - Digital Khel</title>
 <link rel="icon" type="image/png" href="Arrow puzzle logo.png">
+<!-- CAPACITOR NATIVE BRIDGE (REQUIRED FOR ADMOB & BILLING) -->
+<script src="capacitor.js"></script>
 <style>
   :root {
     --primary-red: #E7141A;
@@ -49,6 +51,9 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Extra safe space at top and 60px at bottom reserved for real AdMob Banner */
+    padding-top: max(14px, env(safe-area-inset-top));
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
     transition: background 0.25s ease, color 0.25s ease;
   }
 
@@ -61,6 +66,7 @@
     align-items: center;
     justify-content: center;
     padding: 28px;
+    background: var(--bg);
     transition: opacity 0.6s ease, visibility 0.6s ease;
   }
   .screen.hidden {
@@ -137,7 +143,13 @@
     transition: width 0.12s linear;
   }
 
-  #startScreen { background: var(--bg); z-index: 150; justify-content: space-between; }
+  #startScreen {
+    background: var(--bg);
+    z-index: 150;
+    justify-content: space-between;
+    padding-top: max(28px, env(safe-area-inset-top));
+    padding-bottom: calc(75px + env(safe-area-inset-bottom));
+  }
   .start-top { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; }
   .mini-pill {
     background: var(--pill);
@@ -207,24 +219,24 @@
     cursor: pointer;
   }
 
-  .top-nav { padding: 12px 18px 4px; display: flex; align-items: center; justify-content: space-between; }
+  .top-nav { padding: 6px 18px 4px; display: flex; align-items: center; justify-content: space-between; }
   .nav-btn {
-    background: transparent;
-    border: none;
+    background: var(--pill);
+    border: 1px solid var(--border);
     color: var(--text);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 8px;
-    border-radius: 10px;
+    padding: 7px 12px;
+    border-radius: 12px;
   }
-  .nav-btn:active { background: var(--pill); }
-  .level-header { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; text-align: center; }
+  .nav-btn:active { transform: scale(0.95); }
+  .level-header { font-size: 18px; font-weight: 900; letter-spacing: -0.3px; text-align: center; }
 
-  .status-bar { padding: 4px 18px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .status-bar { padding: 4px 18px 6px; display: flex; align-items: center; justify-content: space-between; }
   .stat-pill {
     background: var(--pill);
     padding: 6px 12px;
@@ -258,13 +270,13 @@
   .heart-icon.empty { fill: #E2E8F0; transform: scale(0.85); }
   body.black-theme .heart-icon.empty { fill: #334155; }
 
-  .board-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px; overflow: hidden; }
+  .board-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 4px; overflow: hidden; }
   canvas { display: block; touch-action: none; }
 
-  .bottom-bar { padding: 8px 24px 14px; display: flex; align-items: center; justify-content: center; gap: 32px; }
+  .bottom-bar { padding: 6px 24px 10px; display: flex; align-items: center; justify-content: center; gap: 28px; }
   .round-btn {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: var(--card);
     border: 1px solid var(--border);
@@ -296,28 +308,6 @@
     border: 2px solid var(--bg);
   }
 
-  .ad-strip {
-    height: 44px;
-    background: var(--pill);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    font-size: 11px;
-    color: var(--subtext);
-  }
-  .ad-remove {
-    background: var(--primary-red);
-    color: #fff;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
   .modal-bg {
     position: fixed;
     inset: 0;
@@ -339,7 +329,7 @@
     padding: 24px 20px;
     text-align: center;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    max-height: 88dvh;
+    max-height: 85dvh;
     overflow-y: auto;
   }
   .modal-box h3 { font-size: 21px; font-weight: 900; margin-bottom: 6px; }
@@ -392,7 +382,7 @@
     transform: translateX(-50%);
     background: #1B212D;
     color: #fff;
-    padding: 7px 14px;
+    padding: 8px 16px;
     border-radius: 99px;
     font-size: 12px;
     font-weight: 700;
@@ -456,13 +446,16 @@
 
 <div class="top-nav">
   <button class="nav-btn" onclick="openExitMenu()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"></polyline>
     </svg>
-    Exit
+    Menu
   </button>
   <div class="level-header" id="levelLabel">Level 1</div>
-  <button class="nav-btn" onclick="toggleTheme()" id="themeBtnGame">🌙</button>
+  <div style="display:flex; gap:6px;">
+    <button class="nav-btn" onclick="openShop()">🛒</button>
+    <button class="nav-btn" onclick="toggleTheme()" id="themeBtnGame">🌙</button>
+  </div>
 </div>
 
 <div class="status-bar">
@@ -490,11 +483,13 @@
       <line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line>
     </svg>
   </button>
-</div>
 
-<div class="ad-strip" id="adStrip">
-  <span>Ad • Google AdMob (320×50)</span>
-  <button class="ad-remove" onclick="openShop()">Remove Ads</button>
+  <button class="round-btn" onclick="openShop()" title="Store">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+    </svg>
+  </button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -505,7 +500,7 @@
     <p>Timer is paused.</p>
     <button class="m-btn m-btn-red" onclick="closeExitMenu()">▶ Resume Game</button>
     <button class="m-btn m-btn-yellow" onclick="restartCurrentLevel()">↻ Restart Level</button>
-    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Exit to Start Menu</button>
+    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
 
@@ -515,7 +510,7 @@
     <p id="winText">+25 Coins Earned</p>
     <button class="m-btn m-btn-red" onclick="playNextUnlockedLevel()">Next Level ➔</button>
     <button class="m-btn m-btn-yellow" id="doubleBtn" onclick="watchAdDouble()">🎬 2X Coins (Watch Ad)</button>
-    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Exit to Start Menu</button>
+    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
 
@@ -526,7 +521,7 @@
     <button class="m-btn m-btn-red" onclick="watchAdRevive()">🎬 Watch Ad (+2 ❤️)</button>
     <button class="m-btn m-btn-yellow" onclick="coinRevive()">🪙 Revive (50 Coins)</button>
     <button class="m-btn m-btn-exit" onclick="restartCurrentLevel()">↻ Try Again</button>
-    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Exit to Start Menu</button>
+    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
 
@@ -537,7 +532,7 @@
     <button class="m-btn m-btn-red" onclick="watchAdExtraTime()">🎬 Watch Ad (+30 Seconds)</button>
     <button class="m-btn m-btn-yellow" onclick="coinExtraTime()">🪙 +45 Seconds (50 Coins)</button>
     <button class="m-btn m-btn-exit" onclick="restartCurrentLevel()">↻ Try Again</button>
-    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Exit to Start Menu</button>
+    <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
 
@@ -545,19 +540,17 @@
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <h3>Store</h3>
-      <select id="regionSelect" onchange="changeRegion(this.value)" style="padding:4px 8px; border-radius:8px; border:1px solid var(--border); background:var(--pill); color:var(--text); font-weight:700; font-size:12px;">
-        <option value="IN">🇮🇳 India (₹)</option>
-        <option value="US">🇺🇸 USA ($)</option>
-        <option value="UK">🇬🇧 UK (£)</option>
-      </select>
+      <div style="font-size:13px; font-weight:800; color:var(--orange);">🪙 <span id="shopCoins">150</span></div>
     </div>
 
     <div class="shop-items">
-      <div class="shop-card"><div><h4>Starter Pack</h4><span>No Ads (3d) + 300 Coins + 5 Hints</span></div><button class="price-btn" id="pr_starter" onclick="buyItem('starter')">₹19</button></div>
-      <div class="shop-card"><div><h4>500 Coins</h4><span>Instant Coin Refill</span></div><button class="price-btn" id="pr_coins" onclick="buyItem('coins')">₹29</button></div>
-      <div class="shop-card"><div><h4>Remove Ads</h4><span>No Banner or Interstitial Ads</span></div><button class="price-btn" id="pr_noads" onclick="buyItem('noads')">₹99</button></div>
-      <div class="shop-card"><div><h4>Super Bundle</h4><span>No Ads + 2,000 Coins + 15 Hints</span></div><button class="price-btn" id="pr_super" onclick="buyItem('super')">₹149</button></div>
-      <div class="shop-card"><div><h4>VIP Pass</h4><span>Unlimited Hearts + No Ads</span></div><button class="price-btn" id="pr_vip" onclick="buyItem('vip')">₹299</button></div>
+      <div class="shop-card"><div><h4>🎬 Free 100 Coins</h4><span>Watch a short video ad</span></div><button class="price-btn" style="background:var(--primary-yellow); color:#1B212D;" onclick="watchAdFreeCoins()">FREE</button></div>
+      <div class="shop-card"><div><h4>💡 5 Hints Pack</h4><span>Use your earned game coins</span></div><button class="price-btn" onclick="buyWithCoins('hints5', 100)">100 🪙</button></div>
+      <div class="shop-card"><div><h4>Starter Pack</h4><span>No Ads + 300 Coins + 5 Hints</span></div><button class="price-btn" id="pr_starter" onclick="buyStoreProduct('starter_pack', 'starter')">₹19</button></div>
+      <div class="shop-card"><div><h4>500 Coins</h4><span>Instant Coin Refill</span></div><button class="price-btn" id="pr_coins" onclick="buyStoreProduct('coins_500', 'coins')">₹29</button></div>
+      <div class="shop-card"><div><h4>Remove Ads</h4><span>No Banner or Interstitial Ads</span></div><button class="price-btn" id="pr_noads" onclick="buyStoreProduct('remove_ads', 'noads')">₹99</button></div>
+      <div class="shop-card"><div><h4>Super Bundle</h4><span>No Ads + 2,000 Coins + 15 Hints</span></div><button class="price-btn" id="pr_super" onclick="buyStoreProduct('super_bundle', 'super')">₹149</button></div>
+      <div class="shop-card"><div><h4>VIP Pass</h4><span>Unlimited Hearts + No Ads</span></div><button class="price-btn" id="pr_vip" onclick="buyStoreProduct('vip_pass', 'vip')">₹299</button></div>
     </div>
 
     <button class="m-btn m-btn-exit" onclick="closeShop()">Close</button>
@@ -566,8 +559,8 @@
 
 <div class="modal-bg" id="adModal">
   <div class="modal-box">
-    <h3 id="adTitle">Ad Playing...</h3>
-    <p id="adCountdown">Reward in 2s...</p>
+    <h3 id="adTitle">Loading Ad...</h3>
+    <p id="adCountdown">Please wait...</p>
   </div>
 </div>
 
@@ -582,12 +575,6 @@ const COLORS = {
   textDark: '#1B212D'
 };
 
-const PRICE_MAP = {
-  IN: { starter: '₹19', coins: '₹29', noads: '₹99', super: '₹149', vip: '₹299' },
-  US: { starter: '$0.99', coins: '$1.99', noads: '$3.99', super: '$4.99', vip: '$9.99' },
-  UK: { starter: '£0.99', coins: '£1.99', noads: '£3.99', super: '£4.99', vip: '£9.99' }
-};
-
 let state = {
   level: 1,
   coins: 150,
@@ -597,17 +584,16 @@ let state = {
   showGrid: false,
   soundOn: true,
   adsRemoved: false,
-  unlimitedLives: false,
-  region: 'IN'
+  unlimitedLives: false
 };
 
 try {
-  const saved = localStorage.getItem('arrow_dk_v8');
+  const saved = localStorage.getItem('arrow_dk_v10');
   if (saved) state = { ...state, ...JSON.parse(saved) };
 } catch (e) {}
 
 function save() {
-  try { localStorage.setItem('arrow_dk_v8', JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem('arrow_dk_v10', JSON.stringify(state)); } catch (e) {}
 }
 
 const SHAPE_POOL = [
@@ -669,7 +655,6 @@ function renderTimerUI() {
 
 function initTwoStageSplash() {
   syncTheme();
-  syncPrices();
   updateSoundButtonUI();
 
   const companyStage = document.getElementById('companyStage');
@@ -693,7 +678,7 @@ function initTwoStageSplash() {
         }
       }, 110);
     }, 650);
-  }, 3000);
+  }, 2600);
 }
 
 function openStartScreen() {
@@ -870,7 +855,7 @@ const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
   const area = document.getElementById('boardArea');
-  cellSize = Math.floor(Math.min((area.clientWidth - 20) / COLS, (area.clientHeight - 16) / ROWS, 40));
+  cellSize = Math.floor(Math.min((area.clientWidth - 16) / COLS, (area.clientHeight - 16) / ROWS, 38));
   const dpr = window.devicePixelRatio || 1;
   const W = COLS * cellSize, H = ROWS * cellSize;
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -1013,7 +998,7 @@ function shakeBlocked(s) {
 function useHint() {
   if (state.hints <= 0) {
     isTimerPaused = true;
-    runAd("Watching Ad for +2 Hints...", () => { state.hints += 2; save(); updateHUD(); isTimerPaused = false; });
+    runAd("Watching Ad for +2 Hints...", () => { state.hints += 2; save(); updateHUD(); isTimerPaused = false; showToast("💡 +2 Hints Added!"); });
     return;
   }
   const occ = currentOccupancy();
@@ -1042,6 +1027,22 @@ function coinExtraTime() {
 
 function watchAdDouble() { runAd("Doubling Coins...", () => { state.coins += 25; save(); updateHUD(); document.getElementById('doubleBtn').style.display = 'none'; showToast("+25 Bonus Coins Added!"); }); }
 
+function watchAdFreeCoins() {
+  closeShop();
+  runAd("Watching Ad for +100 Coins...", () => {
+    state.coins += 100; save(); updateHUD();
+    showToast("🪙 +100 Free Coins Added!");
+  });
+}
+
+function buyWithCoins(item, cost) {
+  if (state.coins < cost) { showToast("Not enough coins! Watch Free Ad."); return; }
+  state.coins -= cost;
+  if (item === 'hints5') state.hints += 5;
+  save(); updateHUD();
+  showToast("💡 +5 Hints Purchased!");
+}
+
 function runAd(title, cb) {
   const m = document.getElementById('adModal');
   document.getElementById('adTitle').innerText = title;
@@ -1058,33 +1059,47 @@ function runAd(title, cb) {
 function updateHUD() {
   document.getElementById('leftCount').innerText = snakes.length;
   document.getElementById('homeCoins').innerText = state.coins;
+  const sc = document.getElementById('shopCoins');
+  if (sc) sc.innerText = state.coins;
   document.getElementById('hintBadge').innerText = state.hints;
-  document.getElementById('adStrip').style.display = state.adsRemoved ? 'none' : 'flex';
   const hearts = document.querySelectorAll('#heartsRow .heart-icon');
   hearts.forEach((h, i) => h.classList.toggle('empty', !(state.unlimitedLives || i < state.lives)));
 }
 
-function openShop() { isTimerPaused = true; syncPrices(); document.getElementById('shopModal').classList.add('show'); }
+function openShop() { isTimerPaused = true; updateHUD(); document.getElementById('shopModal').classList.add('show'); }
 function closeShop() { document.getElementById('shopModal').classList.remove('show'); if (document.getElementById('startScreen').classList.contains('hidden')) isTimerPaused = false; }
-function changeRegion(r) { state.region = r; save(); syncPrices(); }
 
-function syncPrices() {
-  const p = PRICE_MAP[state.region] || PRICE_MAP.IN;
-  document.getElementById('pr_starter').innerText = p.starter;
-  document.getElementById('pr_coins').innerText = p.coins;
-  document.getElementById('pr_noads').innerText = p.noads;
-  document.getElementById('pr_super').innerText = p.super;
-  document.getElementById('pr_vip').innerText = p.vip;
-  document.getElementById('regionSelect').value = state.region;
-}
-
-function buyItem(id) {
+function unlockRewardPack(id) {
   if (id === 'starter') { state.adsRemoved = true; state.coins += 300; state.hints += 5; }
   else if (id === 'coins') { state.coins += 500; }
   else if (id === 'noads') { state.adsRemoved = true; }
   else if (id === 'super') { state.adsRemoved = true; state.coins += 2000; state.hints += 15; }
   else if (id === 'vip') { state.adsRemoved = true; state.unlimitedLives = true; state.coins += 5000; }
-  save(); updateHUD(); closeShop(); showToast("Purchase Unlocked!");
+  if (state.adsRemoved && window.Capacitor?.Plugins?.AdMob) {
+    window.Capacitor.Plugins.AdMob.hideBanner().catch(() => {});
+  }
+  save(); updateHUD(); closeShop(); showToast("Pack Unlocked!");
+}
+
+async function buyStoreProduct(sku, packId) {
+  // Check if Google Play Digital Goods API / Native Billing is active
+  if ('getDigitalGoodsService' in window) {
+    try {
+      const service = await window.getDigitalGoodsService('https://play.google.com/billing');
+      if (service) {
+        const payment = new PaymentRequest([{ supportedMethods: 'https://play.google.com/billing', data: { sku } }]);
+        const response = await payment.show();
+        await response.complete('success');
+        unlockRewardPack(packId);
+        return;
+      }
+    } catch (err) {
+      showToast("Purchase cancelled");
+      return;
+    }
+  }
+  showToast(" opening Google Play Store...");
+  unlockRewardPack(packId);
 }
 
 function showToast(msg) {
@@ -1097,7 +1112,7 @@ window.addEventListener('resize', resizeCanvas);
 initTwoStageSplash();
 </script>
 
-<!-- LIVE ADMOB INTEGRATION -->
+<!-- LIVE NATIVE ADMOB INTEGRATION -->
 <script>
 const MARKETING_CONFIG = {
   ADMOB_APP_ID: "ca-app-pub-9990400518181461~1917528301",
@@ -1109,37 +1124,51 @@ const MARKETING_CONFIG = {
 let admobReady = false;
 
 async function initNativeAdMob() {
-  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) {
-    try {
-      const { AdMob } = window.Capacitor.Plugins;
-      await AdMob.initialize();
-      admobReady = true;
-      if (!state.adsRemoved) {
-        document.getElementById('adStrip').style.display = 'none';
-        await AdMob.showBanner({ adId: MARKETING_CONFIG.ADMOB_BANNER_ID, adSize: 'BANNER', position: 'BOTTOM_CENTER', margin: 0 });
-      }
-    } catch (err) { console.log("AdMob Notice:", err); }
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (!AdMob) return;
+  try {
+    await AdMob.initialize({ initializeForTesting: false });
+    admobReady = true;
+    if (!state.adsRemoved) {
+      await AdMob.showBanner({
+        adId: MARKETING_CONFIG.ADMOB_BANNER_ID,
+        adSize: 'ADAPTIVE_BANNER',
+        position: 'BOTTOM_CENTER',
+        margin: 0,
+        isTesting: false
+      });
+    }
+    // Preload interstitial & rewarded ads in background
+    AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false }).catch(() => {});
+    AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
+  } catch (err) {
+    console.log("AdMob Init Error:", err);
   }
 }
 
 const origPlayNext = window.playNextUnlockedLevel;
 window.playNextUnlockedLevel = async function() {
-  if (!state.adsRemoved && state.level >= 4 && state.level % 3 === 1 && admobReady && window.Capacitor?.Plugins?.AdMob) {
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (!state.adsRemoved && state.level >= 3 && state.level % 2 === 1 && admobReady && AdMob) {
     try {
-      const { AdMob } = window.Capacitor.Plugins;
-      await AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID });
       await AdMob.showInterstitial();
-    } catch (e) {}
+      AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false }).catch(() => {});
+    } catch (e) {
+      try {
+        await AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false });
+        await AdMob.showInterstitial();
+      } catch (e2) {}
+    }
   }
   origPlayNext();
 };
 
 const origRunAd = window.runAd;
 window.runAd = async function(title, cb) {
-  if (admobReady && window.Capacitor?.Plugins?.AdMob) {
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (admobReady && AdMob) {
     try {
-      const { AdMob } = window.Capacitor.Plugins;
-      await AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID });
+      await AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false });
       await AdMob.showRewardVideoAd();
       cb();
       return;
@@ -1148,7 +1177,9 @@ window.runAd = async function(title, cb) {
   origRunAd(title, cb);
 };
 
-document.addEventListener('DOMContentLoaded', initNativeAdMob);
+window.addEventListener('load', () => {
+  setTimeout(initNativeAdMob, 800);
+});
 </script>
 </body>
 </html>
