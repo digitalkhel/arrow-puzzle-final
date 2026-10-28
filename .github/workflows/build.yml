@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.4",
+            "version": "1.0.5",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
@@ -57,7 +57,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Fullscreen Immersive Mode, AdMob, Billing & SDK 36
+      - name: Configure Fullscreen Immersive Mode, AdMob, Billing 8.0.0 & SDK 36
         run: |
           # 1. Set minSdkVersion 24 & targetSdkVersion 36
           VARS="android/variables.gradle"
@@ -67,18 +67,18 @@ jobs:
             sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' "$VARS"
           fi
 
-          # 2. Bump versionCode to 5 and add Google Play Billing library in app/build.gradle
+          # 2. Bump versionCode to 6 and add Google Play Billing 8.0.0 in app/build.gradle
           APP_GRADLE="android/app/build.gradle"
           if [ -f "$APP_GRADLE" ]; then
-            sed -i 's/versionCode 1/versionCode 5/g' "$APP_GRADLE"
-            sed -i 's/versionName "1.0"/versionName "1.0.4"/g' "$APP_GRADLE"
-            sed -i 's|dependencies {|dependencies {\n    implementation "com.android.billingclient:billing:7.0.0"|g' "$APP_GRADLE"
+            sed -i 's/versionCode 1/versionCode 6/g' "$APP_GRADLE"
+            sed -i 's/versionName "1.0"/versionName "1.0.5"/g' "$APP_GRADLE"
+            sed -i 's|dependencies {|dependencies {\n    implementation "com.android.billingclient:billing:8.0.0"|g' "$APP_GRADLE"
           fi
 
           # 3. Allow AndroidX libraries to compile smoothly with SDK 36
           echo "android.suppressUnsupportedCompileSdk=36" >> android/gradle.properties
 
-          # 4. Enable Sticky Immersive Full-Screen Mode in MainActivity.java (Hides Status & Nav Bars until swipe!)
+          # 4. Enable Sticky Immersive Full-Screen Mode in MainActivity.java
           cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/MainActivity.java
           package com.digitalkhel.arrowpuzzle;
 
@@ -154,7 +154,7 @@ jobs:
       - name: Upload Signed AAB & APK
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-Release-v5-FullFix
+          name: Digital-Khel-Arrow-Puzzle-Release-v6-Billing8
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/debug/*.apk
