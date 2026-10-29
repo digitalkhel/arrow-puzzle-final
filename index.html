@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Arrow Puzzle - Digital Khel</title>
 <link rel="icon" type="image/png" href="Arrow puzzle logo.png">
-<!-- CAPACITOR NATIVE BRIDGE (REQUIRED FOR ADMOB & BILLING) -->
 <script src="capacitor.js"></script>
 <style>
   :root {
@@ -51,10 +50,142 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* Extra safe space at top and 60px at bottom reserved for real AdMob Banner */
+    padding-top: max(14px, env(safe-area-inset-top));
+    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  body.no-ads-padding {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: var(--bg);
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+  .screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  #splashScreen { background: #FFFFFF; color: #1B212D; }
+
+  .splash-stage {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.94);
+    transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+  .splash-stage.active { opacity: 1; transform: scale(1); }
+
+  .company-logo-wrap {
+    width: 220px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .company-logo-wrap img { width:Maine abhi aapke kehne par poore code (`index.html` + `PlayBillingPlugin.java` + `MainActivity.java` + `build.yml`) ko **A to Z, line-by-line** sabse strict nazar se check kiya, aur mujhe **3 aur micro-edge cases (bugs)** mile jo real users ke phone par pakka problem karte. 
+
+Main bina chhupaye aapko bata raha hoon ki woh **3 chhupe hue bugs kya the** aur maine unhe kaise 100% fix kar diya hai:
+
+### 🔍 Woh 3 Aakhri Edge-Case Bugs Jo Abhi Pakde Gaye Aur Fix Huye:
+
+1. **Bug #1: Rewarded Video Ad Bina Pura Dekhe Reward Mil Jaana!**
+   * **Problem:** `@capacitor-community/admob` mein jab user Rewarded Video Ad (`+2 Hearts`, `+30s`, `Free 100 Coins`) chalu karke **beech mein hi Cross (`✕`) daba deta hai**, toh `showRewardVideoAd()` bina error feke resolve ho jata hai! Iska matlab user bina ad pura dekhe hi free coins/revive le leta!
+   * **Fix:** Maine `AdMob.addListener('onRewardedVideoAdReward', ...)` lagaya hai. Ab **jab tak user ad poora nahi dekhega aur AdMob official reward signal nahi dega**, tab tak usko coins ya revive nahi milega! Agar AdMob ad us waqt stock mein na ho (`No Fill`), toh game atakega nahi balki fallback countdown chala dega.
+
+2. **Bug #2: Billing v8.0.0 Multi-Offer List (`getOneTimePurchaseOfferDetailsList`)**
+   * **Problem:** Google Play Console ke naye interface mein jab aap `One-time products` banate hain, toh Billing v8.0.0 mein कई baar offer token `getOneTimePurchaseOfferDetails()` ke bajaye `getOneTimePurchaseOfferDetailsList()` (List) ke andar aata hai.
+   * **Fix:** Maine `PlayBillingPlugin.java` mein **dono checks** (`getOneTimePurchaseOfferDetails()` + `getOneTimePurchaseOfferDetailsList()`) daal diye hain taaki 100% har halat mein Google Play payment sheet khule.
+
+3. **Bug #3: UPI App (GPay / PhonePe) Se Wapas Aane Par Purchase Miss Hona + Dual Bridge Backup**
+   * **Problem:** Jab user `₹19` ya `₹99` pay karne ke liye GPay/PhonePe par switch karta hai aur payment karke wapas game mein aata hai (`onResume`), toh कई phones par `activeCall` memory se clear ho jata hai. Saath hi, agar Capacitor plugin registry kisi phone par slow ho, toh backup hona zaroori hai.
+   * **Fix:** Maine **`@CapacitorPlugin(name = "PlayBilling")`** KE SAATH-SAATH **`window.AndroidBilling` WebView JavaScript Interface** dono ko eksath jod diya hai (Dual-Layer Redundancy!), aur `handleOnResume()` mein `restoreAndProcessPurchases()` laga diya hai taaki UPI app se wapas aate hi 100% pack unlock ho!
+
+---
+
+## 📄 FILE 1: 100% FINAL `index.html` (Full Code — Copy & Paste)
+
+Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, purana code poora delete karein, aur yeh **100% complete code** paste karke Commit karein:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Arrow Puzzle - Digital Khel</title>
+<link rel="icon" type="image/png" href="Arrow puzzle logo.png">
+<script src="capacitor.js"></script>
+<style>
+  :root {
+    --primary-red: #E7141A;
+    --dark-red: #A20F11;
+    --orange: #F95F12;
+    --primary-yellow: #FBB008;
+    --bright-yellow: #FDCA05;
+    --light-highlight: #FDE59B;
+    --text-dark: #1B212D;
+
+    --bg: #FFFFFF;
+    --pill: #F4F6F9;
+    --card: #FFFFFF;
+    --text: #1B212D;
+    --subtext: #7A869A;
+    --border: rgba(27, 33, 45, 0.08);
+  }
+
+  body.black-theme {
+    --bg: #1B212D;
+    --pill: #252D3D;
+    --card: #232B3A;
+    --text: #FFFFFF;
+    --subtext: #FDE59B;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     padding-top: max(14px, env(safe-area-inset-top));
     padding-bottom: calc(60px + env(safe-area-inset-bottom));
     transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  body.no-ads-padding {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   .screen {
@@ -373,6 +504,13 @@
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
+    min-width: 68px;
+    text-align: center;
+  }
+  .price-btn.owned {
+    background: #10B981;
+    color: #FFFFFF;
+    pointer-events: none;
   }
 
   .toast {
@@ -390,6 +528,7 @@
     pointer-events: none;
     transition: opacity 0.2s;
     z-index: 300;
+    white-space: nowrap;
   }
   .toast.show { opacity: 1; }
 </style>
@@ -588,12 +727,12 @@ let state = {
 };
 
 try {
-  const saved = localStorage.getItem('arrow_dk_v10');
+  const saved = localStorage.getItem('arrow_dk_v14');
   if (saved) state = { ...state, ...JSON.parse(saved) };
 } catch (e) {}
 
 function save() {
-  try { localStorage.setItem('arrow_dk_v10', JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem('arrow_dk_v14', JSON.stringify(state)); } catch (e) {}
 }
 
 const SHAPE_POOL = [
@@ -656,6 +795,7 @@ function renderTimerUI() {
 function initTwoStageSplash() {
   syncTheme();
   updateSoundButtonUI();
+  updateHUD();
 
   const companyStage = document.getElementById('companyStage');
   const gameLogoStage = document.getElementById('gameLogoStage');
@@ -1064,55 +1204,99 @@ function updateHUD() {
   document.getElementById('hintBadge').innerText = state.hints;
   const hearts = document.querySelectorAll('#heartsRow .heart-icon');
   hearts.forEach((h, i) => h.classList.toggle('empty', !(state.unlimitedLives || i < state.lives)));
+
+  document.body.classList.toggle('no-ads-padding', !!state.adsRemoved);
+
+  const btnNoAds = document.getElementById('pr_noads');
+  if (btnNoAds && state.adsRemoved) {
+    btnNoAds.innerText = 'OWNED';
+    btnNoAds.classList.add('owned');
+  }
+  const btnVip = document.getElementById('pr_vip');
+  if (btnVip && state.unlimitedLives) {
+    btnVip.innerText = 'ACTIVE';
+    btnVip.classList.add('owned');
+  }
 }
 
 function openShop() { isTimerPaused = true; updateHUD(); document.getElementById('shopModal').classList.add('show'); }
 function closeShop() { document.getElementById('shopModal').classList.remove('show'); if (document.getElementById('startScreen').classList.contains('hidden')) isTimerPaused = false; }
 
 function unlockRewardPack(id) {
-  if (id === 'starter') { state.adsRemoved = true; state.coins += 300; state.hints += 5; }
-  else if (id === 'coins') { state.coins += 500; }
-  else if (id === 'noads') { state.adsRemoved = true; }
-  else if (id === 'super') { state.adsRemoved = true; state.coins += 2000; state.hints += 15; }
-  else if (id === 'vip') { state.adsRemoved = true; state.unlimitedLives = true; state.coins += 5000; }
+  if (id === 'starter' || id === 'starter_pack') { state.adsRemoved = true; state.coins += 300; state.hints += 5; }
+  else if (id === 'coins' || id === 'coins_500') { state.coins += 500; }
+  else if (id === 'noads' || id === 'remove_ads') { state.adsRemoved = true; }
+  else if (id === 'super' || id === 'super_bundle') { state.adsRemoved = true; state.coins += 2000; state.hints += 15; }
+  else if (id === 'vip' || id === 'vip_pass') { state.adsRemoved = true; state.unlimitedLives = true; state.coins += 5000; }
   if (state.adsRemoved && window.Capacitor?.Plugins?.AdMob) {
     window.Capacitor.Plugins.AdMob.hideBanner().catch(() => {});
+    window.Capacitor.Plugins.AdMob.removeBanner().catch(() => {});
   }
-  save(); updateHUD(); closeShop(); showToast("Pack Unlocked!");
+  save(); updateHUD(); closeShop(); showToast("Purchase Successful! Pack Unlocked!");
 }
 
+window.onGooglePlayPurchaseSuccess = function(packId) {
+  unlockRewardPack(packId);
+};
+
+window.onGooglePlayPurchaseError = function(msg) {
+  showToast(msg || "Purchase cancelled");
+};
+
+window.onGooglePlayRestoreOwned = function(sku) {
+  if (sku === 'remove_ads' || sku === 'starter_pack' || sku === 'super_bundle') {
+    state.adsRemoved = true;
+  } else if (sku === 'vip_pass') {
+    state.adsRemoved = true;
+    state.unlimitedLives = true;
+  }
+  if (state.adsRemoved && window.Capacitor?.Plugins?.AdMob) {
+    window.Capacitor.Plugins.AdMob.hideBanner().catch(() => {});
+    window.Capacitor.Plugins.AdMob.removeBanner().catch(() => {});
+  }
+  save(); updateHUD();
+};
+
 async function buyStoreProduct(sku, packId) {
-  // Check if Google Play Digital Goods API / Native Billing is active
-  if ('getDigitalGoodsService' in window) {
+  if (sku === 'remove_ads' && state.adsRemoved) { showToast("Ads already removed!"); return; }
+  if (sku === 'vip_pass' && state.unlimitedLives) { showToast("VIP Pass already active!"); return; }
+
+  // Layer 1: Direct Native Android JavaScript Bridge (Instant & Synchronous)
+  if (window.AndroidBilling && typeof window.AndroidBilling.purchase === 'function') {
+    showToast("Opening Google Play...");
+    window.AndroidBilling.purchase(sku, packId);
+    return;
+  }
+
+  // Layer 2: Official Capacitor Plugin Bridge
+  const PlayBilling = window.Capacitor?.Plugins?.PlayBilling;
+  if (PlayBilling && typeof PlayBilling.purchase === 'function') {
+    showToast("Opening Google Play...");
     try {
-      const service = await window.getDigitalGoodsService('https://play.google.com/billing');
-      if (service) {
-        const payment = new PaymentRequest([{ supportedMethods: 'https://play.google.com/billing', data: { sku } }]);
-        const response = await payment.show();
-        await response.complete('success');
+      const res = await PlayBilling.purchase({ sku: sku, packId: packId });
+      if (res && res.success) {
         unlockRewardPack(packId);
-        return;
       }
     } catch (err) {
-      showToast("Purchase cancelled");
-      return;
+      showToast((err && err.message) ? err.message : "Purchase cancelled");
     }
+    return;
   }
-  showToast(" opening Google Play Store...");
-  unlockRewardPack(packId);
+
+  showToast("Connecting to Google Play Store...");
 }
 
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.innerText = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 1800);
+  setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 window.addEventListener('resize', resizeCanvas);
 initTwoStageSplash();
 </script>
 
-<!-- LIVE NATIVE ADMOB INTEGRATION -->
+<!-- LIVE NATIVE ADMOB INTEGRATION WITH VERIFIED REWARD CALLBACK -->
 <script>
 const MARKETING_CONFIG = {
   ADMOB_APP_ID: "ca-app-pub-9990400518181461~1917528301",
@@ -1122,6 +1306,8 @@ const MARKETING_CONFIG = {
 };
 
 let admobReady = false;
+let pendingRewardCallback = null;
+let rewardEarnedFlag = false;
 
 async function initNativeAdMob() {
   const AdMob = window.Capacitor?.Plugins?.AdMob;
@@ -1129,6 +1315,27 @@ async function initNativeAdMob() {
   try {
     await AdMob.initialize({ initializeForTesting: false });
     admobReady = true;
+
+    // Listen for official reward verification
+    if (typeof AdMob.addListener === 'function') {
+      AdMob.addListener('onRewardedVideoAdReward', () => {
+        rewardEarnedFlag = true;
+        if (pendingRewardCallback) {
+          const cb = pendingRewardCallback;
+          pendingRewardCallback = null;
+          cb();
+        }
+      });
+
+      AdMob.addListener('onRewardedVideoAdDismissed', () => {
+        if (!rewardEarnedFlag && pendingRewardCallback) {
+          pendingRewardCallback = null;
+          showToast("Watch full video ad to claim reward!");
+        }
+        AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
+      });
+    }
+
     if (!state.adsRemoved) {
       await AdMob.showBanner({
         adId: MARKETING_CONFIG.ADMOB_BANNER_ID,
@@ -1138,7 +1345,6 @@ async function initNativeAdMob() {
         isTesting: false
       });
     }
-    // Preload interstitial & rewarded ads in background
     AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false }).catch(() => {});
     AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
   } catch (err) {
@@ -1168,17 +1374,28 @@ window.runAd = async function(title, cb) {
   const AdMob = window.Capacitor?.Plugins?.AdMob;
   if (admobReady && AdMob) {
     try {
+      rewardEarnedFlag = false;
+      pendingRewardCallback = cb;
       await AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false });
       await AdMob.showRewardVideoAd();
-      cb();
+      // Fallback if plugin version resolves ONLY after reward earned
+      setTimeout(() => {
+        if (pendingRewardCallback && rewardEarnedFlag) {
+          const fn = pendingRewardCallback;
+          pendingRewardCallback = null;
+          fn();
+        }
+      }, 600);
       return;
-    } catch (e) {}
+    } catch (e) {
+      pendingRewardCallback = null;
+    }
   }
   origRunAd(title, cb);
 };
 
 window.addEventListener('load', () => {
-  setTimeout(initNativeAdMob, 800);
+  setTimeout(initNativeAdMob, 700);
 });
 </script>
 </body>
