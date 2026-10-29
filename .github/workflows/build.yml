@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.5",
+            "version": "1.0.6",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
@@ -57,7 +57,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Fullscreen Immersive Mode, AdMob, Billing 8.0.0 & SDK 36
+      - name: Configure Fullscreen, AdMob, Dual-Bridge Billing 8.0.0 & SDK 36
         run: |
           # 1. Set minSdkVersion 24 & targetSdkVersion 36
           VARS="android/variables.gradle"
@@ -67,18 +67,274 @@ jobs:
             sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' "$VARS"
           fi
 
-          # 2. Bump versionCode to 6 and add Google Play Billing 8.0.0 in app/build.gradle
+          # 2. Bump versionCode to 7 and add Google Play Billing 8.0.0 in app/build.gradle
           APP_GRADLE="android/app/build.gradle"
           if [ -f "$APP_GRADLE" ]; then
-            sed -i 's/versionCode 1/versionCode 6/g' "$APP_GRADLE"
-            sed -i 's/versionName "1.0"/versionName "1.0.5"/g' "$APP_GRADLE"
+            sed -i 's/versionCode 1/versionCode 7/g' "$APP_GRADLE"
+            sed -i 's/versionName "1.0"/versionName "1.0.6"/g' "$APP_GRADLE"
             sed -i 's|dependencies {|dependencies {\n    implementation "com.android.billingclient:billing:8.0.0"|g' "$APP_GRADLE"
           fi
 
           # 3. Allow AndroidX libraries to compile smoothly with SDK 36
           echo "android.suppressUnsupportedCompileSdk=36" >> android/gradle.properties
 
-          # 4. Enable Sticky Immersive Full-Screen Mode in MainActivity.java
+          # 4. Write Capacitor Native PlayBillingPlugin.java (With Dual JS Bridge + OfferToken List Support + OnResume Recovery)
+          cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/PlayBillingPlugin.java
+          package com.digitalkhel.arrowpuzzle;
+
+          import android.webkit.JavascriptInterface;
+          import androidx.annotation.NonNull;
+          import com.android.billingclient.api.*;
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          import java.util.Collections;
+          import java.util.List;
+
+          @CapacitorPlugin(name = "PlayBilling")
+          public class PlayBillingPlugin extends Plugin implements PurchasesUpdatedListener {
+              private BillingClient billingClient;
+              private PluginCall activeCall;
+              private String activePackId = "";
+
+              @Override
+              public void load() {
+                  super.load();
+                  if (getBridge() != null && getBridge().getWebView() != null) {
+                      getBridge().getWebView().addJavascriptInterface(new DirectBillingJsBridge(), "AndroidBilling");
+                  }
+                  setupBilling(null);
+              }
+
+              @Override
+              protected void handleOnResume() {
+                  super.handleOnResume();
+                  if (billingClient != null && billingClient.isReady()) {
+                      restoreOwnedPurchases();
+                  }
+              }
+
+              public class DirectBillingJsBridge {
+                  @JavascriptInterface
+                  public void purchase(final String sku, final String packId) {
+                      activePackId = packId != null ? packId : sku;
+                      activeCall = null;
+                      if (getActivity() != null) {
+                          getActivity().runOnUiThread(() -> {
+                              if (billingClient == null || !billingClient.isReady()) {
+                                  setupBilling(() -> queryAndLaunch(sku, null));
+                              } else {
+                                  queryAndLaunch(sku, null);
+                              }
+                          });
+                      }
+                  }
+              }
+
+              private void setupBilling(final Runnable onReadyCallback) {
+                  if (billingClient == null) {
+                      billingClient = BillingClient.newBuilder(getContext())
+                          .setListener(this)
+                          .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+                          .build();
+                  }
+
+                  billingClient.startConnection(new BillingClientStateListener() {
+                      @Override
+                      public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+                          if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                              restoreOwnedPurchases();
+                              if (onReadyCallback != null) {
+                                  onReadyCallback.run();
+                              }
+                          } else {
+                              if (activeCall != null) {
+                                  activeCall.reject("Google Play Billing unavailable");
+                                  activeCall = null;
+                              } else {
+                                  evalJs("if(window.onGooglePlayPurchaseError) window.onGooglePlayPurchaseError('Google Play Billing unavailable');");
+                              }
+                          }
+                      }
+                      @Override
+                      public void onBillingServiceDisconnected() {}
+                  });
+              }
+
+              private void restoreOwnedPurchases() {
+                  if (billingClient == null || !billingClient.isReady()) return;
+                  QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+                      .setProductType(BillingClient.ProductType.INAPP)
+                      .build();
+                  billingClient.queryPurchasesAsync(params, (billingResult, purchases) -> {
+                      if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && purchases != null) {
+                          for (Purchase purchase : purchases) {
+                              if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                                  boolean isPermanent = purchase.getProducts().contains("remove_ads") || purchase.getProducts().contains("vip_pass");
+                                  if (isPermanent) {
+                                      if (!purchase.isAcknowledged()) {
+                                          AcknowledgePurchaseParams ack = AcknowledgePurchaseParams.newBuilder()
+                                              .setPurchaseToken(purchase.getPurchaseToken())
+                                              .build();
+                                          billingClient.acknowledgePurchase(ack, res -> {});
+                                      }
+                                      for (String sku : purchase.getProducts()) {
+                                          evalJs("if(window.onGooglePlayRestoreOwned) window.onGooglePlayRestoreOwned('" + sku + "');");
+                                      }
+                                  } else {
+                                      // Unconsumed consumable bought while switching back from UPI app
+                                      ConsumeParams consumeParams = ConsumeParams.newBuilder()
+                                          .setPurchaseToken(purchase.getPurchaseToken())
+                                          .build();
+                                      billingClient.consumeAsync(consumeParams, (res, token) -> {
+                                          if (res.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                              for (String sku : purchase.getProducts()) {
+                                                  evalJs("if(window.onGooglePlayPurchaseSuccess) window.onGooglePlayPurchaseSuccess('" + sku + "');");
+                                              }
+                                          }
+                                      });
+                                  }
+                              }
+                          }
+                      }
+                  });
+              }
+
+              @PluginMethod
+              public void purchase(final PluginCall call) {
+                  final String sku = call.getString("sku");
+                  final String packId = call.getString("packId", "");
+                  if (sku == null || sku.isEmpty()) {
+                      call.reject("Invalid product SKU");
+                      return;
+                  }
+
+                  activeCall = call;
+                  activePackId = packId.isEmpty() ? sku : packId;
+
+                  if (billingClient == null || !billingClient.isReady()) {
+                      setupBilling(() -> queryAndLaunch(sku, call));
+                      return;
+                  }
+
+                  queryAndLaunch(sku, call);
+              }
+
+              private void queryAndLaunch(final String sku, final PluginCall call) {
+                  QueryProductDetailsParams.Product product = QueryProductDetailsParams.Product.newBuilder()
+                      .setProductId(sku)
+                      .setProductType(BillingClient.ProductType.INAPP)
+                      .build();
+
+                  QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                      .setProductList(Collections.singletonList(product))
+                      .build();
+
+                  billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsResult) -> {
+                      List<ProductDetails> list = productDetailsResult != null ? productDetailsResult.getProductDetailsList() : null;
+                      if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && list != null && !list.isEmpty()) {
+                          ProductDetails pd = list.get(0);
+                          BillingFlowParams.ProductDetailsParams.Builder pdBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+                              .setProductDetails(pd);
+
+                          String offerToken = null;
+                          if (pd.getOneTimePurchaseOfferDetails() != null) {
+                              offerToken = pd.getOneTimePurchaseOfferDetails().getOfferToken();
+                          }
+                          if ((offerToken == null || offerToken.isEmpty()) && pd.getOneTimePurchaseOfferDetailsList() != null && !pd.getOneTimePurchaseOfferDetailsList().isEmpty()) {
+                              offerToken = pd.getOneTimePurchaseOfferDetailsList().get(0).getOfferToken();
+                          }
+                          if (offerToken != null && !offerToken.isEmpty()) {
+                              pdBuilder.setOfferToken(offerToken);
+                          }
+
+                          BillingFlowParams flowParams = BillingFlowParams.newBuilder()
+                              .setProductDetailsParamsList(Collections.singletonList(pdBuilder.build()))
+                              .build();
+
+                          if (getActivity() != null) {
+                              getActivity().runOnUiThread(() -> billingClient.launchBillingFlow(getActivity(), flowParams));
+                          }
+                      } else {
+                          String errMsg = "Product not active on Play Store yet (" + sku + ")";
+                          if (call != null) {
+                              call.reject(errMsg);
+                              activeCall = null;
+                          } else {
+                              evalJs("if(window.onGooglePlayPurchaseError) window.onGooglePlayPurchaseError('" + errMsg + "');");
+                          }
+                      }
+                  });
+              }
+
+              @Override
+              public void onPurchasesUpdated(@NonNull BillingResult billingResult, List<Purchase> purchases) {
+                  if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && purchases != null) {
+                      for (Purchase purchase : purchases) {
+                          if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                              boolean isPermanentOnly = purchase.getProducts().contains("remove_ads") || purchase.getProducts().contains("vip_pass");
+                              if (isPermanentOnly) {
+                                  if (!purchase.isAcknowledged()) {
+                                      AcknowledgePurchaseParams ackParams = AcknowledgePurchaseParams.newBuilder()
+                                          .setPurchaseToken(purchase.getPurchaseToken())
+                                          .build();
+                                      billingClient.acknowledgePurchase(ackParams, res -> {});
+                                  }
+                              } else {
+                                  ConsumeParams consumeParams = ConsumeParams.newBuilder()
+                                      .setPurchaseToken(purchase.getPurchaseToken())
+                                      .build();
+                                  billingClient.consumeAsync(consumeParams, (res, token) -> {});
+                              }
+
+                              String unlockId = !activePackId.isEmpty() ? activePackId : (purchase.getProducts().isEmpty() ? "" : purchase.getProducts().get(0));
+                              if (activeCall != null) {
+                                  JSObject ret = new JSObject();
+                                  ret.put("success", true);
+                                  ret.put("packId", unlockId);
+                                  activeCall.resolve(ret);
+                                  activeCall = null;
+                              } else {
+                                  evalJs("if(window.onGooglePlayPurchaseSuccess) window.onGooglePlayPurchaseSuccess('" + unlockId + "');");
+                              }
+                          } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
+                              evalJs("if(window.onGooglePlayPurchaseError) window.onGooglePlayPurchaseError('Payment pending approval...');");
+                          }
+                      }
+                  } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
+                      if (activeCall != null) {
+                          activeCall.reject("Purchase cancelled");
+                          activeCall = null;
+                      } else {
+                          evalJs("if(window.onGooglePlayPurchaseError) window.onGooglePlayPurchaseError('Purchase cancelled');");
+                      }
+                  } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+                      restoreOwnedPurchases();
+                      if (activeCall != null) {
+                          activeCall.resolve();
+                          activeCall = null;
+                      }
+                  } else {
+                      if (activeCall != null) {
+                          activeCall.reject("Purchase failed");
+                          activeCall = null;
+                      } else {
+                          evalJs("if(window.onGooglePlayPurchaseError) window.onGooglePlayPurchaseError('Purchase failed');");
+                      }
+                  }
+              }
+
+              private void evalJs(final String script) {
+                  if (getActivity() != null && getBridge() != null && getBridge().getWebView() != null) {
+                      getActivity().runOnUiThread(() -> getBridge().getWebView().evaluateJavascript(script, null));
+                  }
+              }
+          }
+          EOF
+
+          # 5. Write Clean MainActivity.java Registering PlayBillingPlugin BEFORE super.onCreate
           cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/MainActivity.java
           package com.digitalkhel.arrowpuzzle;
 
@@ -91,6 +347,7 @@ jobs:
           public class MainActivity extends BridgeActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(PlayBillingPlugin.class);
                   super.onCreate(savedInstanceState);
                   hideSystemBars();
               }
@@ -113,20 +370,20 @@ jobs:
           }
           EOF
 
-          # 5. Add Meta IDs to strings.xml
+          # 6. Add Meta IDs to strings.xml
           STRINGS="android/app/src/main/res/values/strings.xml"
           if [ -f "$STRINGS" ]; then
             sed -i 's|</resources>|    <string name="facebook_app_id">953250167441885</string>\n    <string name="facebook_client_token">d5435ea514ff2a885c8d48939832af0f</string>\n</resources>|g' "$STRINGS"
           fi
 
-          # 6. Add AD_ID + BILLING Permissions + AdMob & Meta Metadata to AndroidManifest.xml
+          # 7. Add AD_ID + BILLING Permissions + AdMob & Meta Metadata to AndroidManifest.xml
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
             sed -i 's|<application|    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    <uses-permission android:name="com.android.vending.BILLING"/>\n    <application|g' "$MANIFEST"
             sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n    </application>|g' "$MANIFEST"
           fi
 
-          # 7. Set App Icon cleanly
+          # 8. Set App Icon cleanly
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           if [ -f "www/Arrow puzzle logo.png" ]; then
             for dir in android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
@@ -136,7 +393,7 @@ jobs:
             done
           fi
 
-      - name: Sign AAB & APK Using Your Permanent Keystore
+      - name: Sign Release AAB Using Permanent Keystore
         run: |
           if [ ! -f "release.keystore" ]; then
             keytool -genkey -v -keystore release.keystore -alias dkkey -keyalg RSA -keysize 2048 -validity 10000 -storepass digitalkhel123 -keypass digitalkhel123 -dname "CN=Digital Khel, O=Digital Khel, C=IN"
@@ -144,18 +401,16 @@ jobs:
 
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
           ./gradlew bundleRelease \
             -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/release.keystore \
             -Pandroid.injected.signing.store.password=digitalkhel123 \
             -Pandroid.injected.signing.key.alias=dkkey \
             -Pandroid.injected.signing.key.password=digitalkhel123
 
-      - name: Upload Signed AAB & APK
+      - name: Upload Signed Release AAB
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-Release-v6-Billing8
+          name: Digital-Khel-Arrow-Puzzle-FINAL-v7
           path: |
             android/app/build/outputs/bundle/release/*.aab
-            android/app/build/outputs/apk/debug/*.apk
             release.keystore
