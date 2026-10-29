@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Arrow Puzzle - Digital Khel</title>
-<link rel="icon" type="image/png" href="Arrow puzzle logo.png">
 <script src="capacitor.js"></script>
 <style>
   :root {
@@ -43,142 +42,22 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
+  html, body {
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    padding-top: max(14px, env(safe-area-inset-top));
-    padding-bottom: calc(62px + env(safe-area-inset-bottom));
-    transition: background 0.25s ease, color 0.25s ease;
-  }
-
-  body.no-ads-padding {
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-  }
-
-  .screen {
     position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 28px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: var(--bg);
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-  }
-  .screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  #splashScreen { background: #FFFFFF; color: #1B212D; }
-
-  .splash-stage {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    opacity: 0;
-    transform: scale(0.94);
-    transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
-    pointer-events: none;
-  }
-  .splash-stage.active { opacity: 1; transform: scale(1); }
-
-  .company-logo-wrap {
-    width: 220px;
-    min-height: 170px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
-  }
-  .company-logo-wrap img { width:Maine abhi aapke kehne par poore code (`index.html` + `PlayBillingPlugin.java` + `MainActivity.java` + `build.yml`) ko **A to Z, line-by-line** sabse strict nazar se check kiya, aur mujhe **3 aur micro-edge cases (bugs)** mile jo real users ke phone par pakka problem karte. 
-
-Main bina chhupaye aapko bata raha hoon ki woh **3 chhupe hue bugs kya the** aur maine unhe kaise 100% fix kar diya hai:
-
-### 🔍 Woh 3 Aakhri Edge-Case Bugs Jo Abhi Pakde Gaye Aur Fix Huye:
-
-1. **Bug #1: Rewarded Video Ad Bina Pura Dekhe Reward Mil Jaana!**
-   * **Problem:** `@capacitor-community/admob` mein jab user Rewarded Video Ad (`+2 Hearts`, `+30s`, `Free 100 Coins`) chalu karke **beech mein hi Cross (`✕`) daba deta hai**, toh `showRewardVideoAd()` bina error feke resolve ho jata hai! Iska matlab user bina ad pura dekhe hi free coins/revive le leta!
-   * **Fix:** Maine `AdMob.addListener('onRewardedVideoAdReward', ...)` lagaya hai. Ab **jab tak user ad poora nahi dekhega aur AdMob official reward signal nahi dega**, tab tak usko coins ya revive nahi milega! Agar AdMob ad us waqt stock mein na ho (`No Fill`), toh game atakega nahi balki fallback countdown chala dega.
-
-2. **Bug #2: Billing v8.0.0 Multi-Offer List (`getOneTimePurchaseOfferDetailsList`)**
-   * **Problem:** Google Play Console ke naye interface mein jab aap `One-time products` banate hain, toh Billing v8.0.0 mein कई baar offer token `getOneTimePurchaseOfferDetails()` ke bajaye `getOneTimePurchaseOfferDetailsList()` (List) ke andar aata hai.
-   * **Fix:** Maine `PlayBillingPlugin.java` mein **dono checks** (`getOneTimePurchaseOfferDetails()` + `getOneTimePurchaseOfferDetailsList()`) daal diye hain taaki 100% har halat mein Google Play payment sheet khule.
-
-3. **Bug #3: UPI App (GPay / PhonePe) Se Wapas Aane Par Purchase Miss Hona + Dual Bridge Backup**
-   * **Problem:** Jab user `₹19` ya `₹99` pay karne ke liye GPay/PhonePe par switch karta hai aur payment karke wapas game mein aata hai (`onResume`), toh कई phones par `activeCall` memory se clear ho jata hai. Saath hi, agar Capacitor plugin registry kisi phone par slow ho, toh backup hona zaroori hai.
-   * **Fix:** Maine **`@CapacitorPlugin(name = "PlayBilling")`** KE SAATH-SAATH **`window.AndroidBilling` WebView JavaScript Interface** dono ko eksath jod diya hai (Dual-Layer Redundancy!), aur `handleOnResume()` mein `restoreAndProcessPurchases()` laga diya hai taaki UPI app se wapas aate hi 100% pack unlock ho!
-
----
-
-## 📄 FILE 1: 100% FINAL `index.html` (Full Code — Copy & Paste)
-
-Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, purana code poora delete karein, aur yeh **100% complete code** paste karke Commit karein:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Arrow Puzzle - Digital Khel</title>
-<link rel="icon" type="image/png" href="Arrow puzzle logo.png">
-<script src="capacitor.js"></script>
-<style>
-  :root {
-    --primary-red: #E7141A;
-    --dark-red: #A20F11;
-    --orange: #F95F12;
-    --primary-yellow: #FBB008;
-    --bright-yellow: #FDCA05;
-    --light-highlight: #FDE59B;
-    --text-dark: #1B212D;
-
-    --bg: #FFFFFF;
-    --pill: #F4F6F9;
-    --card: #FFFFFF;
-    --text: #1B212D;
-    --subtext: #7A869A;
-    --border: rgba(27, 33, 45, 0.08);
-  }
-
-  body.black-theme {
-    --bg: #1B212D;
-    --pill: #252D3D;
-    --card: #232B3A;
-    --text: #FFFFFF;
-    --subtext: #FDE59B;
-    --border: rgba(255, 255, 255, 0.1);
-  }
-
-  * {
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text);
   }
 
   body {
-    background: var(--bg);
-    color: var(--text);
-    height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     padding-top: max(14px, env(safe-area-inset-top));
     padding-bottom: calc(60px + env(safe-area-inset-bottom));
     transition: background 0.25s ease, color 0.25s ease;
@@ -190,98 +69,118 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
 
   .screen {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
     z-index: 200;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 28px;
+    padding: 24px;
     background: var(--bg);
-    transition: opacity 0.6s ease, visibility 0.6s ease;
+    overflow: hidden;
   }
   .screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  #splashScreen { background: #FFFFFF; color: #1B212D; }
+  #splashScreen {
+    background: #FFFFFF;
+    color: #1B212D;
+    z-index: 500;
+  }
 
   .splash-stage {
-    position: absolute;
-    display: flex;
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    opacity: 0;
-    transform: scale(0.94);
-    transition: opacity 0.75s ease, transform 0.75s cubic-bezier(0.2, 0.8, 0.2, 1);
-    pointer-events: none;
+    width: 100%;
+    max-width: 280px;
   }
-  .splash-stage.active { opacity: 1; transform: scale(1); }
-
-  .company-logo-wrap {
-    width: 220px;
-    min-height: 170px;
+  .splash-stage.active {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
   }
-  .company-logo-wrap img { width: 210px; height: auto; object-fit: contain; }
+
+  .company-logo-box {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 12px auto;
+    background-image: url('DIGITAL-KHEL.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
   .presents-text {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 900;
     letter-spacing: 5px;
     color: #1B212D;
     text-transform: uppercase;
-    margin-top: 8px;
+    margin-top: 6px;
     opacity: 0.85;
   }
 
-  .game-icon-wrap {
-    width: 148px;
-    height: 148px;
-    border-radius: 34px;
-    background: #FFFFFF;
-    box-shadow: 0 16px 38px rgba(27, 33, 45, 0.14), 0 2px 8px rgba(27, 33, 45, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    margin-bottom: 18px;
-    border: 1px solid rgba(27, 33, 45, 0.06);
+  .game-icon-box {
+    width: 124px;
+    height: 124px;
+    border-radius: 28px;
+    background-color: #FFFFFF;
+    background-image: url('Arrow puzzle logo.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: 0 12px 28px rgba(27, 33, 45, 0.15);
+    margin: 0 auto 16px auto;
+    border: 2px solid rgba(27, 33, 45, 0.08);
   }
-  .game-icon-wrap img { width: 100%; height: 100%; object-fit: cover; }
-  .splash-game-title { font-size: 28px; font-weight: 900; color: #1B212D; letter-spacing: -0.5px; }
+
+  .splash-game-title {
+    font-size: 26px;
+    font-weight: 900;
+    color: #1B212D;
+    letter-spacing: -0.5px;
+  }
   .splash-game-title span { color: var(--primary-red); }
   .loader-bar {
-    width: 180px;
+    width: 170px;
     height: 7px;
     background: #F1F5F9;
     border-radius: 99px;
     overflow: hidden;
-    margin-top: 22px;
+    margin: 20px auto 0 auto;
   }
   .loader-fill {
     width: 0%;
     height: 100%;
     background: linear-gradient(90deg, var(--primary-yellow), var(--orange), var(--primary-red));
     border-radius: 99px;
-    transition: width 0.12s linear;
+    transition: width 0.1s linear;
   }
 
   #startScreen {
     background: var(--bg);
     z-index: 150;
     justify-content: space-between;
-    padding-top: max(28px, env(safe-area-inset-top));
-    padding-bottom: calc(75px + env(safe-area-inset-bottom));
+    padding-top: max(22px, env(safe-area-inset-top));
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
-  .start-top { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; }
+  .start-top {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
   .mini-pill {
     background: var(--pill);
     border: 1px solid var(--border);
@@ -295,26 +194,32 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
     align-items: center;
     gap: 6px;
   }
-  .start-center { display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 300px; }
-  .start-icon-card {
-    width: 118px;
-    height: 118px;
-    border-radius: 28px;
-    background: #FFFFFF;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+  .start-center {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    margin-bottom: 14px;
-    border: 2px solid rgba(27, 33, 45, 0.06);
+    text-align: center;
+    width: 100%;
+    max-width: 290px;
   }
-  .start-icon-card img { width: 100%; height: 100%; object-fit: cover; }
-  .start-title { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
-  .start-sub { font-size: 13px; color: var(--subtext); margin-top: 4px; margin-bottom: 26px; font-weight: 600; }
+  .start-icon-box {
+    width: 108px;
+    height: 108px;
+    border-radius: 24px;
+    background-color: #FFFFFF;
+    background-image: url('Arrow puzzle logo.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+    margin: 0 auto 14px auto;
+    border: 2px solid rgba(27, 33, 45, 0.08);
+  }
+  .start-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+  .start-sub { font-size: 13px; color: var(--subtext); margin-top: 4px; margin-bottom: 22px; font-weight: 600; }
   .btn-play {
     width: 100%;
-    padding: 16px;
+    padding: 15px;
     border-radius: 16px;
     border: none;
     background: var(--primary-red);
@@ -350,7 +255,7 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
     cursor: pointer;
   }
 
-  .top-nav { padding: 6px 18px 4px; display: flex; align-items: center; justify-content: space-between; }
+  .top-nav { padding: 6px 16px 4px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .nav-btn {
     background: var(--pill);
     border: 1px solid var(--border);
@@ -365,9 +270,9 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
     border-radius: 12px;
   }
   .nav-btn:active { transform: scale(0.95); }
-  .level-header { font-size: 18px; font-weight: 900; letter-spacing: -0.3px; text-align: center; }
+  .level-header { font-size: 17px; font-weight: 900; letter-spacing: -0.3px; text-align: center; }
 
-  .status-bar { padding: 4px 18px 6px; display: flex; align-items: center; justify-content: space-between; }
+  .status-bar { padding: 4px 16px 6px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .stat-pill {
     background: var(--pill);
     padding: 6px 12px;
@@ -397,17 +302,26 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
   }
 
   .hearts-row { display: flex; gap: 8px; align-items: center; }
-  .heart-icon { width: 24px; height: 24px; fill: var(--primary-red); transition: transform 0.2s, fill 0.2s; }
+  .heart-icon { width: 22px; height: 22px; fill: var(--primary-red); transition: transform 0.2s, fill 0.2s; }
   .heart-icon.empty { fill: #E2E8F0; transform: scale(0.85); }
   body.black-theme .heart-icon.empty { fill: #334155; }
 
-  .board-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 4px; overflow: hidden; }
+  .board-area {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    overflow: hidden;
+  }
   canvas { display: block; touch-action: none; }
 
-  .bottom-bar { padding: 6px 24px 10px; display: flex; align-items: center; justify-content: center; gap: 28px; }
+  .bottom-bar { padding: 4px 24px 8px; display: flex; align-items: center; justify-content: center; gap: 28px; flex-shrink: 0; }
   .round-btn {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: var(--card);
     border: 1px solid var(--border);
@@ -441,7 +355,10 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
 
   .modal-bg {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(27, 33, 45, 0.55);
     backdrop-filter: blur(3px);
     display: none;
@@ -456,15 +373,15 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
     color: var(--text);
     border-radius: 22px;
     width: 100%;
-    max-width: 340px;
-    padding: 24px 20px;
+    max-width: 330px;
+    padding: 20px 18px;
     text-align: center;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    max-height: 85dvh;
+    max-height: 82%;
     overflow-y: auto;
   }
-  .modal-box h3 { font-size: 21px; font-weight: 900; margin-bottom: 6px; }
-  .modal-box p { font-size: 13px; color: var(--subtext); margin-bottom: 18px; }
+  .modal-box h3 { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
+  .modal-box p { font-size: 13px; color: var(--subtext); margin-bottom: 16px; }
   .m-btn {
     width: 100%;
     padding: 13px;
@@ -515,7 +432,7 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
 
   .toast {
     position: fixed;
-    top: 75px;
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
     background: #1B212D;
@@ -527,7 +444,7 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
-    z-index: 300;
+    z-index: 600;
     white-space: nowrap;
   }
   .toast.show { opacity: 1; }
@@ -537,19 +454,12 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
 
 <div class="screen" id="splashScreen">
   <div class="splash-stage active" id="companyStage">
-    <div class="company-logo-wrap">
-      <img src="DIGITAL-KHEL.png" alt="DIGITAL KHEL" onerror="this.style.display='none'; document.getElementById('dkFallback').style.display='block';">
-      <div id="dkFallback" style="display:none; text-align:center;">
-        <div style="font-size:28px; font-weight:900; color:#F95F12; letter-spacing:1.5px;">DIGITAL KHEL</div>
-      </div>
-    </div>
+    <div class="company-logo-box"></div>
     <div class="presents-text">PRESENTS</div>
   </div>
 
   <div class="splash-stage" id="gameLogoStage">
-    <div class="game-icon-wrap">
-      <img src="Arrow puzzle logo.png" alt="Arrow Puzzle Logo" onerror="this.style.display='none';">
-    </div>
+    <div class="game-icon-box"></div>
     <div class="splash-game-title">ARROW <span>PUZZLE</span></div>
     <div class="loader-bar">
       <div class="loader-fill" id="splashFill"></div>
@@ -564,9 +474,7 @@ Apni GitHub repository (`arrow-puzzle-final`) mein **`index.html`** kholein, pur
   </div>
 
   <div class="start-center">
-    <div class="start-icon-card">
-      <img src="Arrow puzzle logo.png" alt="Arrow Puzzle Logo" onerror="this.style.display='none';">
-    </div>
+    <div class="start-icon-box"></div>
     <div class="start-title">Arrow Puzzle</div>
     <div class="start-sub">By DIGITAL KHEL</div>
 
@@ -727,12 +635,12 @@ let state = {
 };
 
 try {
-  const saved = localStorage.getItem('arrow_dk_v14');
+  const saved = localStorage.getItem('arrow_dk_v16');
   if (saved) state = { ...state, ...JSON.parse(saved) };
 } catch (e) {}
 
 function save() {
-  try { localStorage.setItem('arrow_dk_v14', JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem('arrow_dk_v16', JSON.stringify(state)); } catch (e) {}
 }
 
 const SHAPE_POOL = [
@@ -803,22 +711,21 @@ function initTwoStageSplash() {
 
   setTimeout(() => {
     companyStage.classList.remove('active');
-    setTimeout(() => {
-      gameLogoStage.classList.add('active');
-      let progress = 0;
-      const timer = setInterval(() => {
-        progress += 4;
-        fill.style.width = Math.min(100, progress) + '%';
-        if (progress >= 100) {
-          clearInterval(timer);
-          setTimeout(() => {
-            document.getElementById('splashScreen').classList.add('hidden');
-            openStartScreen();
-          }, 400);
-        }
-      }, 110);
-    }, 650);
-  }, 2600);
+    gameLogoStage.classList.add('active');
+    let progress = 0;
+    const timer = setInterval(() => {
+      progress += 5;
+      fill.style.width = Math.min(100, progress) + '%';
+      if (progress >= 100) {
+        clearInterval(timer);
+        setTimeout(() => {
+          document.getElementById('splashScreen').classList.add('hidden');
+          openStartScreen();
+          if (window.triggerBannerAfterSplash) window.triggerBannerAfterSplash();
+        }, 250);
+      }
+    }, 80);
+  }, 1800);
 }
 
 function openStartScreen() {
@@ -871,7 +778,7 @@ function playTone(freq, type, dur, slide) {
 
 const DR = [-1, 0, 1, 0];
 const DC = [0, 1, 0, -1];
-let ROWS = 10, COLS = 10, cellSize = 34, snakes = [];
+let ROWS = 10, COLS = 10, cellSize = 32, snakes = [];
 
 function seededRand(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
 
@@ -973,7 +880,7 @@ function buildComplexLevel(lvl) {
     if (list.length >= 10 && checkSolvable(list)) { snakes = list; break; }
   }
 
-  resizeCanvas();
+  setTimeout(resizeCanvas, 20);
   updateHUD();
   startLevelTimer(Math.max(45, Math.min(95, snakes.length * 3 + 15)));
 }
@@ -995,11 +902,15 @@ const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
   const area = document.getElementById('boardArea');
-  cellSize = Math.floor(Math.min((area.clientWidth - 16) / COLS, (area.clientHeight - 16) / ROWS, 38));
-  const dpr = window.devicePixelRatio || 1;
+  const availW = Math.max(240, (area.clientWidth || window.innerWidth) - 24);
+  const availH = Math.max(240, (area.clientHeight || (window.innerHeight - 230)) - 24);
+  cellSize = Math.max(22, Math.floor(Math.min(availW / COLS, availH / ROWS, 38)));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = COLS * cellSize, H = ROWS * cellSize;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   drawMaze();
 }
@@ -1261,14 +1172,12 @@ async function buyStoreProduct(sku, packId) {
   if (sku === 'remove_ads' && state.adsRemoved) { showToast("Ads already removed!"); return; }
   if (sku === 'vip_pass' && state.unlimitedLives) { showToast("VIP Pass already active!"); return; }
 
-  // Layer 1: Direct Native Android JavaScript Bridge (Instant & Synchronous)
   if (window.AndroidBilling && typeof window.AndroidBilling.purchase === 'function') {
     showToast("Opening Google Play...");
     window.AndroidBilling.purchase(sku, packId);
     return;
   }
 
-  // Layer 2: Official Capacitor Plugin Bridge
   const PlayBilling = window.Capacitor?.Plugins?.PlayBilling;
   if (PlayBilling && typeof PlayBilling.purchase === 'function') {
     showToast("Opening Google Play...");
@@ -1296,7 +1205,7 @@ window.addEventListener('resize', resizeCanvas);
 initTwoStageSplash();
 </script>
 
-<!-- LIVE NATIVE ADMOB INTEGRATION WITH VERIFIED REWARD CALLBACK -->
+<!-- LIVE NATIVE ADMOB INTEGRATION -->
 <script>
 const MARKETING_CONFIG = {
   ADMOB_APP_ID: "ca-app-pub-9990400518181461~1917528301",
@@ -1316,7 +1225,6 @@ async function initNativeAdMob() {
     await AdMob.initialize({ initializeForTesting: false });
     admobReady = true;
 
-    // Listen for official reward verification
     if (typeof AdMob.addListener === 'function') {
       AdMob.addListener('onRewardedVideoAdReward', () => {
         rewardEarnedFlag = true;
@@ -1336,21 +1244,27 @@ async function initNativeAdMob() {
       });
     }
 
-    if (!state.adsRemoved) {
-      await AdMob.showBanner({
-        adId: MARKETING_CONFIG.ADMOB_BANNER_ID,
-        adSize: 'ADAPTIVE_BANNER',
-        position: 'BOTTOM_CENTER',
-        margin: 0,
-        isTesting: false
-      });
-    }
     AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false }).catch(() => {});
     AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false }).catch(() => {});
   } catch (err) {
     console.log("AdMob Init Error:", err);
   }
 }
+
+window.triggerBannerAfterSplash = async function() {
+  const AdMob = window.Capacitor?.Plugins?.AdMob;
+  if (AdMob && admobReady && !state.adsRemoved) {
+    try {
+      await AdMob.showBanner({
+        adId: MARKETING_CONFIG.ADMOB_BANNER_ID,
+        adSize: 'BANNER',
+        position: 'BOTTOM_CENTER',
+        margin: 0,
+        isTesting: false
+      });
+    } catch (e) {}
+  }
+};
 
 const origPlayNext = window.playNextUnlockedLevel;
 window.playNextUnlockedLevel = async function() {
@@ -1378,7 +1292,6 @@ window.runAd = async function(title, cb) {
       pendingRewardCallback = cb;
       await AdMob.prepareRewardVideoAd({ adId: MARKETING_CONFIG.ADMOB_REWARDED_ID, isTesting: false });
       await AdMob.showRewardVideoAd();
-      // Fallback if plugin version resolves ONLY after reward earned
       setTimeout(() => {
         if (pendingRewardCallback && rewardEarnedFlag) {
           const fn = pendingRewardCallback;
@@ -1395,7 +1308,7 @@ window.runAd = async function(title, cb) {
 };
 
 window.addEventListener('load', () => {
-  setTimeout(initNativeAdMob, 700);
+  setTimeout(initNativeAdMob, 500);
 });
 </script>
 </body>
