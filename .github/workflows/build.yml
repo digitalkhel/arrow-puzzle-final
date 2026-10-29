@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
@@ -57,7 +57,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Fullscreen, AdMob, Dual-Bridge Billing 8.0.0 & SDK 36
+      - name: Configure Fullscreen, AdMob, Billing 8.0.0 & SDK 36
         run: |
           # 1. Set minSdkVersion 24 & targetSdkVersion 36
           VARS="android/variables.gradle"
@@ -67,18 +67,67 @@ jobs:
             sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' "$VARS"
           fi
 
-          # 2. Bump versionCode to 7 and add Google Play Billing 8.0.0 in app/build.gradle
-          APP_GRADLE="android/app/build.gradle"
-          if [ -f "$APP_GRADLE" ]; then
-            sed -i 's/versionCode 1/versionCode 7/g' "$APP_GRADLE"
-            sed -i 's/versionName "1.0"/versionName "1.0.6"/g' "$APP_GRADLE"
-            sed -i 's|dependencies {|dependencies {\n    implementation "com.android.billingclient:billing:8.0.0"|g' "$APP_GRADLE"
-          fi
+          # 2. Bump versionCode to 8, add Billing 8.0.0 & Release Signing Config in app/build.gradle
+          cat << 'EOF' > android/app/build.gradle
+          apply plugin: 'com.android.application'
+
+          android {
+              namespace "com.digitalkhel.arrowpuzzle"
+              compileSdk rootProject.ext.compileSdkVersion
+              defaultConfig {
+                  applicationId "com.digitalkhel.arrowpuzzle"
+                  minSdkVersion rootProject.ext.minSdkVersion
+                  targetSdkVersion rootProject.ext.targetSdkVersion
+                  versionCode 8
+                  versionName "1.0.7"
+                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+                  aaptOptions {
+                      ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+                  }
+              }
+              signingConfigs {
+                  release {
+                      storeFile file("../../release.keystore")
+                      storePassword "digitalkhel123"
+                      keyAlias "dkkey"
+                      keyPassword "digitalkhel123"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+                  }
+              }
+          }
+
+          repositories {
+              flatDir{
+                  dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+              }
+          }
+
+          dependencies {
+              implementation fileTree(include: ['*.jar'], dir: 'libs')
+              implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+              implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+              implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+              implementation project(':capacitor-android')
+              implementation "com.android.billingclient:billing:8.0.0"
+              testImplementation "junit:junit:$junitVersion"
+              androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+              androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+              implementation project(':capacitor-cordova-android-plugins')
+          }
+
+          apply from: 'capacitor.build.gradle'
+          EOF
 
           # 3. Allow AndroidX libraries to compile smoothly with SDK 36
           echo "android.suppressUnsupportedCompileSdk=36" >> android/gradle.properties
 
-          # 4. Write Capacitor Native PlayBillingPlugin.java (With Dual JS Bridge + OfferToken List Support + OnResume Recovery)
+          # 4. Write Capacitor Native PlayBillingPlugin.java
           cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/PlayBillingPlugin.java
           package com.digitalkhel.arrowpuzzle;
 
@@ -184,7 +233,6 @@ jobs:
                                           evalJs("if(window.onGooglePlayRestoreOwned) window.onGooglePlayRestoreOwned('" + sku + "');");
                                       }
                                   } else {
-                                      // Unconsumed consumable bought while switching back from UPI app
                                       ConsumeParams consumeParams = ConsumeParams.newBuilder()
                                           .setPurchaseToken(purchase.getPurchaseToken())
                                           .build();
@@ -334,11 +382,13 @@ jobs:
           }
           EOF
 
-          # 5. Write Clean MainActivity.java Registering PlayBillingPlugin BEFORE super.onCreate
+          # 5. Write Clean MainActivity.java (Only TextZoom=100)
           cat << 'EOF' > android/app/src/main/java/com/digitalkhel/arrowpuzzle/MainActivity.java
           package com.digitalkhel.arrowpuzzle;
 
           import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
           import androidx.core.view.WindowCompat;
           import androidx.core.view.WindowInsetsCompat;
           import androidx.core.view.WindowInsetsControllerCompat;
@@ -349,6 +399,11 @@ jobs:
               protected void onCreate(Bundle savedInstanceState) {
                   registerPlugin(PlayBillingPlugin.class);
                   super.onCreate(savedInstanceState);
+                  if (getBridge() != null && getBridge().getWebView() != null) {
+                      WebView wv = getBridge().getWebView();
+                      WebSettings ws = wv.getSettings();
+                      ws.setTextZoom(100);
+                  }
                   hideSystemBars();
               }
 
@@ -370,20 +425,43 @@ jobs:
           }
           EOF
 
-          # 6. Add Meta IDs to strings.xml
+          # 6. Remove All Default Capacitor Splash Drawables & Set Clean White Launch Window
+          find android/app/src/main/res -name "splash.png" -delete || true
+          cat << 'EOF' > android/app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+                  <item name="colorPrimary">#E7141A</item>
+                  <item name="colorPrimaryDark">#1B212D</item>
+                  <item name="colorAccent">#F95F12</item>
+                  <item name="android:windowBackground">#FFFFFF</item>
+              </style>
+              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">@null</item>
+                  <item name="android:windowBackground">#FFFFFF</item>
+              </style>
+              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+                  <item name="android:windowBackground">#FFFFFF</item>
+              </style>
+          </resources>
+          EOF
+
+          # 7. Add Meta IDs to strings.xml
           STRINGS="android/app/src/main/res/values/strings.xml"
           if [ -f "$STRINGS" ]; then
             sed -i 's|</resources>|    <string name="facebook_app_id">953250167441885</string>\n    <string name="facebook_client_token">d5435ea514ff2a885c8d48939832af0f</string>\n</resources>|g' "$STRINGS"
           fi
 
-          # 7. Add AD_ID + BILLING Permissions + AdMob & Meta Metadata to AndroidManifest.xml
+          # 8. Add AD_ID + BILLING Permissions + AdMob & Meta Metadata to AndroidManifest.xml
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
             sed -i 's|<application|    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    <uses-permission android:name="com.android.vending.BILLING"/>\n    <application|g' "$MANIFEST"
             sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n    </application>|g' "$MANIFEST"
           fi
 
-          # 8. Set App Icon cleanly
+          # 9. Set App Icon cleanly
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
           if [ -f "www/Arrow puzzle logo.png" ]; then
             for dir in android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
@@ -393,7 +471,7 @@ jobs:
             done
           fi
 
-      - name: Sign Release AAB Using Permanent Keystore
+      - name: Build Signed Release AAB & Signed Release APK
         run: |
           if [ ! -f "release.keystore" ]; then
             keytool -genkey -v -keystore release.keystore -alias dkkey -keyalg RSA -keysize 2048 -validity 10000 -storepass digitalkhel123 -keypass digitalkhel123 -dname "CN=Digital Khel, O=Digital Khel, C=IN"
@@ -401,16 +479,13 @@ jobs:
 
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/release.keystore \
-            -Pandroid.injected.signing.store.password=digitalkhel123 \
-            -Pandroid.injected.signing.key.alias=dkkey \
-            -Pandroid.injected.signing.key.password=digitalkhel123
+          ./gradlew assembleRelease bundleRelease
 
-      - name: Upload Signed Release AAB
+      - name: Upload Signed Release AAB & Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-FINAL-v7
+          name: Digital-Khel-Arrow-Puzzle-FINAL-v8
           path: |
             android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
             release.keystore
