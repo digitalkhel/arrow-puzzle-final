@@ -63,10 +63,6 @@
     transition: background 0.25s ease, color 0.25s ease;
   }
 
-  body.no-ads-padding {
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-  }
-
   .screen {
     position: fixed;
     top: 0;
@@ -203,23 +199,23 @@
     max-width: 290px;
   }
   .start-icon-box {
-    width: 108px;
-    height: 108px;
-    border-radius: 24px;
+    width: 112px;
+    height: 112px;
+    border-radius: 26px;
     background-color: #FFFFFF;
     background-image: url('Arrow puzzle logo.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
-    margin: 0 auto 14px auto;
+    margin: 0 auto 16px auto;
     border: 2px solid rgba(27, 33, 45, 0.08);
   }
-  .start-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
-  .start-sub { font-size: 13px; color: var(--subtext); margin-top: 4px; margin-bottom: 22px; font-weight: 600; }
+  .start-title { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+  .start-sub { font-size: 13px; color: var(--subtext); margin-top: 4px; margin-bottom: 28px; font-weight: 600; }
   .btn-play {
     width: 100%;
-    padding: 15px;
+    padding: 16px;
     border-radius: 16px;
     border: none;
     background: var(--primary-red);
@@ -228,32 +224,8 @@
     font-weight: 800;
     cursor: pointer;
     box-shadow: 0 8px 20px rgba(231, 20, 26, 0.28);
-    margin-bottom: 10px;
   }
   .btn-play:active { transform: scale(0.98); }
-  .start-actions { display: flex; gap: 10px; width: 100%; margin-bottom: 10px; }
-  .btn-soft {
-    flex: 1;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background: var(--pill);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .btn-exit-home {
-    width: 100%;
-    padding: 11px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--subtext);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-  }
 
   .top-nav { padding: 6px 16px 4px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .nav-btn {
@@ -374,14 +346,12 @@
     border-radius: 22px;
     width: 100%;
     max-width: 330px;
-    padding: 20px 18px;
+    padding: 22px 18px;
     text-align: center;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    max-height: 82%;
-    overflow-y: auto;
   }
   .modal-box h3 { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
-  .modal-box p { font-size: 13px; color: var(--subtext); margin-bottom: 16px; }
+  .modal-box p { font-size: 13px; color: var(--subtext); margin-bottom: 18px; }
   .m-btn {
     width: 100%;
     padding: 13px;
@@ -399,36 +369,6 @@
   .m-btn-red { background: var(--primary-red); color: #fff; }
   .m-btn-yellow { background: var(--primary-yellow); color: #1B212D; }
   .m-btn-exit { background: var(--pill); color: var(--text); border: 1px solid var(--border); margin-top: 4px; }
-
-  .shop-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; text-align: left; }
-  .shop-card {
-    background: var(--pill);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .shop-card h4 { font-size: 13px; font-weight: 800; }
-  .shop-card span { font-size: 11px; color: var(--subtext); }
-  .price-btn {
-    background: var(--primary-red);
-    color: #fff;
-    border: none;
-    padding: 7px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 800;
-    cursor: pointer;
-    min-width: 68px;
-    text-align: center;
-  }
-  .price-btn.owned {
-    background: #10B981;
-    color: #FFFFFF;
-    pointer-events: none;
-  }
 
   .toast {
     position: fixed;
@@ -470,7 +410,7 @@
 <div class="screen hidden" id="startScreen">
   <div class="start-top">
     <button class="mini-pill" onclick="toggleTheme()" id="themeBtnHome">🌙 Black Theme</button>
-    <div class="mini-pill" onclick="openShop()">🪙 <span id="homeCoins">150</span> +</div>
+    <button class="mini-pill" onclick="toggleSound()" id="soundBtnHome">🔊 Sound: ON</button>
   </div>
 
   <div class="start-center">
@@ -479,13 +419,6 @@
     <div class="start-sub">By DIGITAL KHEL</div>
 
     <button class="btn-play" id="startPlayBtn" onclick="startGame()">Play Level 1</button>
-
-    <div class="start-actions">
-      <button class="btn-soft" onclick="openShop()">🛒 Store</button>
-      <button class="btn-soft" onclick="toggleSound()" id="soundBtnHome">🔊 Sound: ON</button>
-    </div>
-
-    <button class="btn-exit-home" onclick="exitAppPrompt()">✕ Exit Game</button>
   </div>
 
   <div style="font-size:11px; color:var(--subtext); font-weight:700;">© DIGITAL KHEL</div>
@@ -499,10 +432,7 @@
     Menu
   </button>
   <div class="level-header" id="levelLabel">Level 1</div>
-  <div style="display:flex; gap:6px;">
-    <button class="nav-btn" onclick="openShop()">🛒</button>
-    <button class="nav-btn" onclick="toggleTheme()" id="themeBtnGame">🌙</button>
-  </div>
+  <button class="nav-btn" onclick="toggleTheme()" id="themeBtnGame">🌙</button>
 </div>
 
 <div class="status-bar">
@@ -518,23 +448,23 @@
 <div class="board-area" id="boardArea"><canvas id="mazeCanvas"></canvas></div>
 
 <div class="bottom-bar">
-  <button class="round-btn" onclick="useHint()">
+  <button class="round-btn" onclick="useHint()" title="Hint">
     <span class="count-badge" id="hintBadge">3</span>
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-4 12.75V17h8v-2.25A7 7 0 0 0 12 2z"></path>
     </svg>
   </button>
 
-  <button class="round-btn" id="gridBtn" onclick="toggleGrid()">
+  <button class="round-btn" id="gridBtn" onclick="toggleGrid()" title="Toggle Grid">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line>
     </svg>
   </button>
 
-  <button class="round-btn" onclick="openShop()" title="Store">
+  <button class="round-btn" onclick="restartCurrentLevel()" title="Restart Level">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
-      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
     </svg>
   </button>
 </div>
@@ -554,9 +484,8 @@
 <div class="modal-bg" id="winModal">
   <div class="modal-box">
     <h3>Level Completed!</h3>
-    <p id="winText">+25 Coins Earned</p>
+    <p>Great job clearing the board!</p>
     <button class="m-btn m-btn-red" onclick="playNextUnlockedLevel()">Next Level ➔</button>
-    <button class="m-btn m-btn-yellow" id="doubleBtn" onclick="watchAdDouble()">🎬 2X Coins (Watch Ad)</button>
     <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
@@ -566,8 +495,7 @@
     <h3 style="color:var(--primary-red);">Out of Hearts</h3>
     <p><span id="remArrows">0</span> arrows left on the board.</p>
     <button class="m-btn m-btn-red" onclick="watchAdRevive()">🎬 Watch Ad (+2 ❤️)</button>
-    <button class="m-btn m-btn-yellow" onclick="coinRevive()">🪙 Revive (50 Coins)</button>
-    <button class="m-btn m-btn-exit" onclick="restartCurrentLevel()">↻ Try Again</button>
+    <button class="m-btn m-btn-yellow" onclick="restartCurrentLevel()">↻ Try Again</button>
     <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
@@ -577,30 +505,8 @@
     <h3 style="color:var(--primary-red);">⏱️ Time's Up!</h3>
     <p>Only <span id="timeRemArrows">0</span> arrows left! Need extra time?</p>
     <button class="m-btn m-btn-red" onclick="watchAdExtraTime()">🎬 Watch Ad (+30 Seconds)</button>
-    <button class="m-btn m-btn-yellow" onclick="coinExtraTime()">🪙 +45 Seconds (50 Coins)</button>
-    <button class="m-btn m-btn-exit" onclick="restartCurrentLevel()">↻ Try Again</button>
+    <button class="m-btn m-btn-yellow" onclick="restartCurrentLevel()">↻ Try Again</button>
     <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
-  </div>
-</div>
-
-<div class="modal-bg" id="shopModal">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h3>Store</h3>
-      <div style="font-size:13px; font-weight:800; color:var(--orange);">🪙 <span id="shopCoins">150</span></div>
-    </div>
-
-    <div class="shop-items">
-      <div class="shop-card"><div><h4>🎬 Free 100 Coins</h4><span>Watch a short video ad</span></div><button class="price-btn" style="background:var(--primary-yellow); color:#1B212D;" onclick="watchAdFreeCoins()">FREE</button></div>
-      <div class="shop-card"><div><h4>💡 5 Hints Pack</h4><span>Use your earned game coins</span></div><button class="price-btn" onclick="buyWithCoins('hints5', 100)">100 🪙</button></div>
-      <div class="shop-card"><div><h4>Starter Pack</h4><span>No Ads + 300 Coins + 5 Hints</span></div><button class="price-btn" id="pr_starter" onclick="buyStoreProduct('starter_pack', 'starter')">₹19</button></div>
-      <div class="shop-card"><div><h4>500 Coins</h4><span>Instant Coin Refill</span></div><button class="price-btn" id="pr_coins" onclick="buyStoreProduct('coins_500', 'coins')">₹29</button></div>
-      <div class="shop-card"><div><h4>Remove Ads</h4><span>No Banner or Interstitial Ads</span></div><button class="price-btn" id="pr_noads" onclick="buyStoreProduct('remove_ads', 'noads')">₹99</button></div>
-      <div class="shop-card"><div><h4>Super Bundle</h4><span>No Ads + 2,000 Coins + 15 Hints</span></div><button class="price-btn" id="pr_super" onclick="buyStoreProduct('super_bundle', 'super')">₹149</button></div>
-      <div class="shop-card"><div><h4>VIP Pass</h4><span>Unlimited Hearts + No Ads</span></div><button class="price-btn" id="pr_vip" onclick="buyStoreProduct('vip_pass', 'vip')">₹299</button></div>
-    </div>
-
-    <button class="m-btn m-btn-exit" onclick="closeShop()">Close</button>
   </div>
 </div>
 
@@ -624,23 +530,20 @@ const COLORS = {
 
 let state = {
   level: 1,
-  coins: 150,
   lives: 3,
   hints: 3,
   blackTheme: false,
   showGrid: false,
-  soundOn: true,
-  adsRemoved: false,
-  unlimitedLives: false
+  soundOn: true
 };
 
 try {
-  const saved = localStorage.getItem('arrow_dk_v16');
+  const saved = localStorage.getItem('arrow_dk_clean_v2');
   if (saved) state = { ...state, ...JSON.parse(saved) };
 } catch (e) {}
 
 function save() {
-  try { localStorage.setItem('arrow_dk_v16', JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem('arrow_dk_clean_v2', JSON.stringify(state)); } catch (e) {}
 }
 
 const SHAPE_POOL = [
@@ -731,7 +634,6 @@ function initTwoStageSplash() {
 function openStartScreen() {
   stopLevelTimer();
   document.getElementById('startPlayBtn').innerText = `Play Level ${state.level}`;
-  document.getElementById('homeCoins').innerText = state.coins;
   document.getElementById('startScreen').classList.remove('hidden');
 }
 
@@ -744,7 +646,6 @@ function startGame() {
 function openExitMenu() { isTimerPaused = true; document.getElementById('exitModal').classList.add('show'); }
 function closeExitMenu() { document.getElementById('exitModal').classList.remove('show'); isTimerPaused = false; }
 function exitToStartScreen() { stopLevelTimer(); document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('show')); openStartScreen(); }
-function exitAppPrompt() { showToast("Closing Game..."); setTimeout(() => { if (navigator.app && navigator.app.exitApp) navigator.app.exitApp(); else window.close(); }, 600); }
 
 function toggleTheme() { state.blackTheme = !state.blackTheme; save(); syncTheme(); drawMaze(); }
 function syncTheme() {
@@ -1002,12 +903,14 @@ canvas.addEventListener('pointerdown', (e) => {
     playTone(140, 'sawtooth', 0.16, 85);
     if (navigator.vibrate) navigator.vibrate(60);
     shakeBlocked(s);
-    if (!state.unlimitedLives) {
-      state.lives--; updateHUD();
-      if (state.lives <= 0) {
-        isTimerPaused = true;
-        setTimeout(() => { document.getElementById('remArrows').innerText = snakes.length; document.getElementById('loseModal').classList.add('show'); }, 280);
-      }
+    state.lives--;
+    updateHUD();
+    if (state.lives <= 0) {
+      isTimerPaused = true;
+      setTimeout(() => {
+        document.getElementById('remArrows').innerText = snakes.length;
+        document.getElementById('loseModal').classList.add('show');
+      }, 280);
     }
   }
 });
@@ -1034,9 +937,7 @@ function onLevelCompleted() {
   playTone(523, 'triangle', 0.12);
   setTimeout(() => playTone(659, 'triangle', 0.15), 110);
   state.level++;
-  state.coins += 25;
   save(); updateHUD();
-  document.getElementById('doubleBtn').style.display = 'flex';
   document.getElementById('winModal').classList.add('show');
 }
 
@@ -1049,7 +950,13 @@ function shakeBlocked(s) {
 function useHint() {
   if (state.hints <= 0) {
     isTimerPaused = true;
-    runAd("Watching Ad for +2 Hints...", () => { state.hints += 2; save(); updateHUD(); isTimerPaused = false; showToast("💡 +2 Hints Added!"); });
+    runAd("Watching Ad for +2 Hints...", () => {
+      state.hints += 2;
+      save();
+      updateHUD();
+      isTimerPaused = false;
+      showToast("💡 +2 Hints Added!");
+    });
     return;
   }
   const occ = currentOccupancy();
@@ -1060,39 +967,8 @@ function useHint() {
 function toggleGrid() { state.showGrid = !state.showGrid; document.getElementById('gridBtn').classList.toggle('active', state.showGrid); drawMaze(); }
 function playNextUnlockedLevel() { document.getElementById('winModal').classList.remove('show'); state.lives = 3; buildComplexLevel(state.level); }
 function restartCurrentLevel() { document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('show')); state.lives = 3; buildComplexLevel(state.level); }
-function watchAdRevive() { document.getElementById('loseModal').classList.remove('show'); runAd("Watching Ad for +2 Hearts...", () => { state.lives = 2; isTimerPaused = false; updateHUD(); }); }
-
-function coinRevive() {
-  if (state.coins < 50) { document.getElementById('loseModal').classList.remove('show'); openShop(); return; }
-  state.coins -= 50; state.lives = 3; save(); updateHUD();
-  document.getElementById('loseModal').classList.remove('show'); isTimerPaused = false;
-}
-
+function watchAdRevive() { document.getElementById('loseModal').classList.remove('show'); runAd("Watching Ad for +2 Hearts...", () => { state.lives = 2; isTimerPaused = false; updateHUD(); showToast("❤️ +2 Hearts Restored!"); }); }
 function watchAdExtraTime() { document.getElementById('timeUpModal').classList.remove('show'); runAd("Watching Ad for +30 Seconds...", () => { startLevelTimer(30); showToast("⏱️ +30 Seconds Added!"); }); }
-
-function coinExtraTime() {
-  if (state.coins < 50) { document.getElementById('timeUpModal').classList.remove('show'); openShop(); return; }
-  state.coins -= 50; save(); updateHUD();
-  document.getElementById('timeUpModal').classList.remove('show'); startLevelTimer(45); showToast("⏱️ +45 Seconds Added!");
-}
-
-function watchAdDouble() { runAd("Doubling Coins...", () => { state.coins += 25; save(); updateHUD(); document.getElementById('doubleBtn').style.display = 'none'; showToast("+25 Bonus Coins Added!"); }); }
-
-function watchAdFreeCoins() {
-  closeShop();
-  runAd("Watching Ad for +100 Coins...", () => {
-    state.coins += 100; save(); updateHUD();
-    showToast("🪙 +100 Free Coins Added!");
-  });
-}
-
-function buyWithCoins(item, cost) {
-  if (state.coins < cost) { showToast("Not enough coins! Watch Free Ad."); return; }
-  state.coins -= cost;
-  if (item === 'hints5') state.hints += 5;
-  save(); updateHUD();
-  showToast("💡 +5 Hints Purchased!");
-}
 
 function runAd(title, cb) {
   const m = document.getElementById('adModal');
@@ -1109,90 +985,9 @@ function runAd(title, cb) {
 
 function updateHUD() {
   document.getElementById('leftCount').innerText = snakes.length;
-  document.getElementById('homeCoins').innerText = state.coins;
-  const sc = document.getElementById('shopCoins');
-  if (sc) sc.innerText = state.coins;
   document.getElementById('hintBadge').innerText = state.hints;
   const hearts = document.querySelectorAll('#heartsRow .heart-icon');
-  hearts.forEach((h, i) => h.classList.toggle('empty', !(state.unlimitedLives || i < state.lives)));
-
-  document.body.classList.toggle('no-ads-padding', !!state.adsRemoved);
-
-  const btnNoAds = document.getElementById('pr_noads');
-  if (btnNoAds && state.adsRemoved) {
-    btnNoAds.innerText = 'OWNED';
-    btnNoAds.classList.add('owned');
-  }
-  const btnVip = document.getElementById('pr_vip');
-  if (btnVip && state.unlimitedLives) {
-    btnVip.innerText = 'ACTIVE';
-    btnVip.classList.add('owned');
-  }
-}
-
-function openShop() { isTimerPaused = true; updateHUD(); document.getElementById('shopModal').classList.add('show'); }
-function closeShop() { document.getElementById('shopModal').classList.remove('show'); if (document.getElementById('startScreen').classList.contains('hidden')) isTimerPaused = false; }
-
-function unlockRewardPack(id) {
-  if (id === 'starter' || id === 'starter_pack') { state.adsRemoved = true; state.coins += 300; state.hints += 5; }
-  else if (id === 'coins' || id === 'coins_500') { state.coins += 500; }
-  else if (id === 'noads' || id === 'remove_ads') { state.adsRemoved = true; }
-  else if (id === 'super' || id === 'super_bundle') { state.adsRemoved = true; state.coins += 2000; state.hints += 15; }
-  else if (id === 'vip' || id === 'vip_pass') { state.adsRemoved = true; state.unlimitedLives = true; state.coins += 5000; }
-  if (state.adsRemoved && window.Capacitor?.Plugins?.AdMob) {
-    window.Capacitor.Plugins.AdMob.hideBanner().catch(() => {});
-    window.Capacitor.Plugins.AdMob.removeBanner().catch(() => {});
-  }
-  save(); updateHUD(); closeShop(); showToast("Purchase Successful! Pack Unlocked!");
-}
-
-window.onGooglePlayPurchaseSuccess = function(packId) {
-  unlockRewardPack(packId);
-};
-
-window.onGooglePlayPurchaseError = function(msg) {
-  showToast(msg || "Purchase cancelled");
-};
-
-window.onGooglePlayRestoreOwned = function(sku) {
-  if (sku === 'remove_ads' || sku === 'starter_pack' || sku === 'super_bundle') {
-    state.adsRemoved = true;
-  } else if (sku === 'vip_pass') {
-    state.adsRemoved = true;
-    state.unlimitedLives = true;
-  }
-  if (state.adsRemoved && window.Capacitor?.Plugins?.AdMob) {
-    window.Capacitor.Plugins.AdMob.hideBanner().catch(() => {});
-    window.Capacitor.Plugins.AdMob.removeBanner().catch(() => {});
-  }
-  save(); updateHUD();
-};
-
-async function buyStoreProduct(sku, packId) {
-  if (sku === 'remove_ads' && state.adsRemoved) { showToast("Ads already removed!"); return; }
-  if (sku === 'vip_pass' && state.unlimitedLives) { showToast("VIP Pass already active!"); return; }
-
-  if (window.AndroidBilling && typeof window.AndroidBilling.purchase === 'function') {
-    showToast("Opening Google Play...");
-    window.AndroidBilling.purchase(sku, packId);
-    return;
-  }
-
-  const PlayBilling = window.Capacitor?.Plugins?.PlayBilling;
-  if (PlayBilling && typeof PlayBilling.purchase === 'function') {
-    showToast("Opening Google Play...");
-    try {
-      const res = await PlayBilling.purchase({ sku: sku, packId: packId });
-      if (res && res.success) {
-        unlockRewardPack(packId);
-      }
-    } catch (err) {
-      showToast((err && err.message) ? err.message : "Purchase cancelled");
-    }
-    return;
-  }
-
-  showToast("Connecting to Google Play Store...");
+  hearts.forEach((h, i) => h.classList.toggle('empty', i >= state.lives));
 }
 
 function showToast(msg) {
@@ -1253,7 +1048,7 @@ async function initNativeAdMob() {
 
 window.triggerBannerAfterSplash = async function() {
   const AdMob = window.Capacitor?.Plugins?.AdMob;
-  if (AdMob && admobReady && !state.adsRemoved) {
+  if (AdMob && admobReady) {
     try {
       await AdMob.showBanner({
         adId: MARKETING_CONFIG.ADMOB_BANNER_ID,
@@ -1269,7 +1064,7 @@ window.triggerBannerAfterSplash = async function() {
 const origPlayNext = window.playNextUnlockedLevel;
 window.playNextUnlockedLevel = async function() {
   const AdMob = window.Capacitor?.Plugins?.AdMob;
-  if (!state.adsRemoved && state.level >= 3 && state.level % 2 === 1 && admobReady && AdMob) {
+  if (state.level >= 3 && state.level % 2 === 1 && admobReady && AdMob) {
     try {
       await AdMob.showInterstitial();
       AdMob.prepareInterstitial({ adId: MARKETING_CONFIG.ADMOB_INTERSTITIAL_ID, isTesting: false }).catch(() => {});
