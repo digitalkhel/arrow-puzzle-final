@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.8",
+            "version": "1.0.9",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
@@ -57,7 +57,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Fullscreen, AdMob & SDK 36 (Clean Build Without Billing)
+      - name: Configure Fullscreen, AdMob & SDK 36 (versionCode 10)
         run: |
           VARS="android/variables.gradle"
           if [ -f "$VARS" ]; then
@@ -76,8 +76,8 @@ jobs:
                   applicationId "com.digitalkhel.arrowpuzzle"
                   minSdkVersion rootProject.ext.minSdkVersion
                   targetSdkVersion rootProject.ext.targetSdkVersion
-                  versionCode 9
-                  versionName "1.0.8"
+                  versionCode 10
+                  versionName "1.0.9"
                   testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
                   aaptOptions {
                       ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -219,7 +219,7 @@ jobs:
       - name: Upload Signed Release AAB & Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-CLEAN-v9
+          name: Digital-Khel-Arrow-Puzzle-PROGRESSIVE-v10
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*.apk
