@@ -242,7 +242,7 @@
     border-radius: 12px;
   }
   .nav-btn:active { transform: scale(0.95); }
-  .level-header { font-size: 17px; font-weight: 900; letter-spacing: -0.3px; text-align: center; }
+  .level-header { font-size: 16px; font-weight: 900; letter-spacing: -0.3px; text-align: center; }
 
   .status-bar { padding: 4px 16px 6px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .stat-pill {
@@ -285,7 +285,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    padding: 4px;
     overflow: hidden;
   }
   canvas { display: block; touch-action: none; }
@@ -354,7 +354,7 @@
   .modal-box p { font-size: 13px; color: var(--subtext); margin-bottom: 18px; }
   .m-btn {
     width: 100%;
-    padding: 13px;
+    padding: 14px;
     border-radius: 14px;
     border: none;
     font-size: 14px;
@@ -366,7 +366,11 @@
     justify-content: center;
     gap: 6px;
   }
-  .m-btn-red { background: var(--primary-red); color: #fff; }
+  .m-btn-red {
+    background: var(--primary-red);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(231, 20, 26, 0.28);
+  }
   .m-btn-yellow { background: var(--primary-yellow); color: #1B212D; }
   .m-btn-exit { background: var(--pill); color: var(--text); border: 1px solid var(--border); margin-top: 4px; }
 
@@ -490,22 +494,22 @@
   </div>
 </div>
 
+<!-- Out of Hearts Modal: Try Again button removed so user watches Rewarded Ad to continue -->
 <div class="modal-bg" id="loseModal">
   <div class="modal-box">
-    <h3 style="color:var(--primary-red);">Out of Hearts</h3>
-    <p><span id="remArrows">0</span> arrows left on the board.</p>
-    <button class="m-btn m-btn-red" onclick="watchAdRevive()">🎬 Watch Ad (+2 ❤️)</button>
-    <button class="m-btn m-btn-yellow" onclick="restartCurrentLevel()">↻ Try Again</button>
+    <h3 style="color:var(--primary-red);">Out of Hearts!</h3>
+    <p>Only <span id="remArrows">0</span> arrows left! Watch a short ad to refill hearts and continue from here.</p>
+    <button class="m-btn m-btn-red" onclick="watchAdRevive()">🎬 Watch Ad (+2 ❤️ Continue)</button>
     <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
 
+<!-- Time's Up Modal: Also prioritizes Rewarded Ad -->
 <div class="modal-bg" id="timeUpModal">
   <div class="modal-box">
     <h3 style="color:var(--primary-red);">⏱️ Time's Up!</h3>
-    <p>Only <span id="timeRemArrows">0</span> arrows left! Need extra time?</p>
+    <p>Only <span id="timeRemArrows">0</span> arrows left! Watch a short ad for +30s extra time.</p>
     <button class="m-btn m-btn-red" onclick="watchAdExtraTime()">🎬 Watch Ad (+30 Seconds)</button>
-    <button class="m-btn m-btn-yellow" onclick="restartCurrentLevel()">↻ Try Again</button>
     <button class="m-btn m-btn-exit" onclick="exitToStartScreen()">🏠 Home Screen</button>
   </div>
 </div>
@@ -538,36 +542,61 @@ let state = {
 };
 
 try {
-  const saved = localStorage.getItem('arrow_dk_clean_v2');
+  const saved = localStorage.getItem('arrow_dk_clean_v3');
   if (saved) state = { ...state, ...JSON.parse(saved) };
 } catch (e) {}
 
 function save() {
-  try { localStorage.setItem('arrow_dk_clean_v2', JSON.stringify(state)); } catch (e) {}
+  try { localStorage.setItem('arrow_dk_clean_v3', JSON.stringify(state)); } catch (e) {}
 }
 
-const SHAPE_POOL = [
-  { name: "Heart", mask: [[0,1,1,1,0,0,1,1,1,0],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,1,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,0,1,1,0,0,0,0]] },
-  { name: "Circle", mask: [[0,0,0,1,1,1,1,0,0,0],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[1,1,1,1,0,0,1,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,1,0,0,1,1,1,1],[0,1,1,1,1,1,1,1,1,0],[0,1,1,1,1,1,1,1,1,0],[0,0,0,1,1,1,1,0,0,0]] },
-  { name: "Square", mask: [[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,0,0,0,0,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1]] },
-  { name: "Rectangle", mask: [[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,0,0,0,0,0,1,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,0,0,0,0,0,1,1,1],[1,1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1,1]] },
-  { name: "Diamond", mask: [[0,0,0,0,1,1,0,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,1,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,1,0],[1,1,1,1,0,0,1,1,1,1],[1,1,1,1,0,0,1,1,1,1],[0,1,1,1,1,1,1,1,1,0],[0,0,1,1,1,1,1,1,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,0,1,1,0,0,0,0]] },
-  { name: "Giant Arrow", mask: [[0,0,0,0,1,1,0,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,1,1,1,1,1,1,0,0],[0,1,1,1,1,1,1,1,1,0],[1,1,1,1,1,1,1,1,1,1],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0]] },
-  { name: "Cross", mask: [[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1,1],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0],[0,0,0,1,1,1,1,0,0,0]] },
-  { name: "Full Grid", mask: [[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1,1]] }
-];
+// DYNAMIC PROGRESSIVE DIFFICULTY & SHAPE GENERATOR (Scales from 8x8 up to 16x16 with 12 to 60+ arrows!)
+function generateMaskForLevel(lvl) {
+  let N = 8;
+  let targetArrows = 12;
+  let difficultyTag = "Easy";
+
+  if (lvl <= 3) {
+    N = 8; targetArrows = 10 + lvl * 2; difficultyTag = "Easy";
+  } else if (lvl <= 8) {
+    N = 9; targetArrows = 15 + (lvl - 3) * 2; difficultyTag = "Normal";
+  } else if (lvl <= 15) {
+    N = 10; targetArrows = 22 + Math.floor((lvl - 8) * 1.5); difficultyTag = "Medium";
+  } else if (lvl <= 25) {
+    N = 12; targetArrows = 30 + (lvl - 15); difficultyTag = "Hard";
+  } else if (lvl <= 40) {
+    N = 14; targetArrows = 40 + Math.floor((lvl - 25) * 0.8); difficultyTag = "Expert";
+  } else {
+    N = 16; targetArrows = Math.min(68, 52 + Math.floor((lvl - 40) * 0.6)); difficultyTag = "Master";
+  }
+
+  // Create high-density playable mask with subtle corner/pattern variations so board holds maximum arrows
+  const patternType = lvl % 5;
+  const mask = Array.from({ length: N }, () => Array(N).fill(1));
+  const mid = (N - 1) / 2;
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      if (patternType === 1) {
+        // Rounded Octagon Corners
+        if ((r === 0 || r === N - 1) && (c === 0 || c === N - 1)) mask[r][c] = 0;
+      } else if (patternType === 2 && N >= 10) {
+        // Hollow Center Ring (2x2 center hole)
+        if (Math.abs(r - mid) < 1.1 && Math.abs(c - mid) < 1.1) mask[r][c] = 0;
+      } else if (patternType === 3 && N >= 10) {
+        // Plus / Cross Cutout Corners
+        if ((r < 1 || r >= N - 1) && (c < 1 || c >= N - 1)) mask[r][c] = 0;
+      } else if (patternType === 4 && N >= 12) {
+        // 4 Symmetry Pillars
+        if ((r === 2 || r === N - 3) && (c === 2 || c === N - 3)) mask[r][c] = 0;
+      }
+    }
+  }
+
+  return { name: difficultyTag, mask, targetArrows, minLen: lvl >= 12 ? 2 : 3, maxLen: lvl >= 20 ? 4 : 5 };
+}
 
 let currentShapeObj = null;
-
-function getShapeForLevel(lvl) {
-  let idx = (lvl * 7 + Math.floor(lvl / 2) * 3) % SHAPE_POOL.length;
-  if (lvl > 1) {
-    let prevIdx = ((lvl - 1) * 7 + Math.floor((lvl - 1) / 2) * 3) % SHAPE_POOL.length;
-    if (idx === prevIdx) idx = (idx + 1) % SHAPE_POOL.length;
-  }
-  return SHAPE_POOL[idx];
-}
-
 let timeRemaining = 60;
 let timerInterval = null;
 let isTimerPaused = true;
@@ -693,15 +722,16 @@ function isRayClear(occ, hr, hc, dir, selfId) {
 }
 
 function buildComplexLevel(lvl) {
-  currentShapeObj = getShapeForLevel(lvl);
+  currentShapeObj = generateMaskForLevel(lvl);
   const mask = currentShapeObj.mask;
-  ROWS = mask.length; COLS = mask[0].length;
-  document.getElementById('levelLabel').innerText = `Level ${lvl} • ${currentShapeObj.name}`;
+  const targetArrows = currentShapeObj.targetArrows;
+  ROWS = mask.length;
+  COLS = mask[0].length;
 
-  let tries = 0;
-  while (tries < 30) {
-    tries++;
-    let seed = lvl * 9887 + tries * 431;
+  let bestList = [];
+
+  for (let tries = 1; tries <= 35; tries++) {
+    let seed = lvl * 11317 + tries * 619 + Math.floor(Date.now() % 997);
     const rand = () => seededRand(seed++);
     const occ = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
     const list = [];
@@ -711,30 +741,38 @@ function buildComplexLevel(lvl) {
       for (let c = 0; c < COLS; c++) if (mask[r][c] === 1) coords.push([r, c]);
     }
 
-    for (let pass = 0; pass < 14; pass++) {
+    for (let pass = 0; pass < 26; pass++) {
+      if (list.length >= targetArrows) break;
+
       for (let i = coords.length - 1; i > 0; i--) {
         const j = Math.floor(rand() * (i + 1));
         [coords[i], coords[j]] = [coords[j], coords[i]];
       }
 
       for (const [hr, hc] of coords) {
+        if (list.length >= targetArrows) break;
         if (occ[hr][hc] !== null) continue;
+
         const dirs = [0, 1, 2, 3];
         for (let i = 3; i > 0; i--) {
           const j = Math.floor(rand() * (i + 1));
           [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
         }
-        dirs.sort((a, b) => {
-          const distA = (a === 0 ? hr : a === 2 ? ROWS - hr : a === 3 ? hc : COLS - hc);
-          const distB = (b === 0 ? hr : b === 2 ? ROWS - hr : b === 3 ? hc : COLS - hc);
-          return distB - distA;
-        });
+        // On higher levels, prefer inward/interlocking directions so more arrows block each other
+        if (lvl >= 8 && rand() < 0.72) {
+          dirs.sort((a, b) => {
+            const distA = (a === 0 ? hr : a === 2 ? ROWS - hr : a === 3 ? hc : COLS - hc);
+            const distB = (b === 0 ? hr : b === 2 ? ROWS - hr : b === 3 ? hc : COLS - hc);
+            return distB - distA;
+          });
+        }
 
         let headDir = -1;
         for (const d of dirs) if (isRayClear(occ, hr, hc, d, -1)) { headDir = d; break; }
         if (headDir === -1) continue;
 
-        const targetLen = 4 + Math.floor(rand() * 6);
+        const span = currentShapeObj.maxLen - currentShapeObj.minLen + 1;
+        const targetLen = currentShapeObj.minLen + Math.floor(rand() * span);
         const cells = [[hr, hc]];
         occ[hr][hc] = idCounter;
         let curR = hr, curC = hc, lastDir = (headDir + 2) % 4;
@@ -745,8 +783,8 @@ function buildComplexLevel(lvl) {
             const j = Math.floor(rand() * (i + 1));
             [sDirs[i], sDirs[j]] = [sDirs[j], sDirs[i]];
           }
-          if (step % 2 === 1) sDirs.sort((a, b) => (a !== lastDir ? -1 : 1));
-          else sDirs.sort((a, b) => (a === lastDir ? -1 : 1));
+          // Encourage bends/turns for harder puzzle interlocking
+          if (step % 2 === 0) sDirs.sort((a, b) => (a !== lastDir ? -1 : 1));
 
           let grew = false;
           for (const sd of sDirs) {
@@ -767,8 +805,11 @@ function buildComplexLevel(lvl) {
           if (!grew) break;
         }
 
-        const minLen = pass < 6 ? 3 : 2;
-        if (cells.length < minLen) { for (const [r, c] of cells) occ[r][c] = null; continue; }
+        const reqMin = pass < 10 ? currentShapeObj.minLen : 2;
+        if (cells.length < reqMin) {
+          for (const [r, c] of cells) occ[r][c] = null;
+          continue;
+        }
 
         let colorType = 'dark';
         if (idCounter % 3 === 0) colorType = 'red';
@@ -778,12 +819,20 @@ function buildComplexLevel(lvl) {
       }
     }
 
-    if (list.length >= 10 && checkSolvable(list)) { snakes = list; break; }
+    if (checkSolvable(list)) {
+      if (list.length > bestList.length) bestList = list;
+      if (bestList.length >= targetArrows) break;
+    }
   }
+
+  snakes = bestList;
+  document.getElementById('levelLabel').innerText = `Level ${lvl} • ${currentShapeObj.name} (${snakes.length} ↗)`;
 
   setTimeout(resizeCanvas, 20);
   updateHUD();
-  startLevelTimer(Math.max(45, Math.min(95, snakes.length * 3 + 15)));
+  // Tighter timer on higher levels so difficulty feels intense
+  const timePerArrow = lvl <= 10 ? 3.0 : lvl <= 25 ? 2.4 : 2.0;
+  startLevelTimer(Math.max(45, Math.min(150, Math.round(snakes.length * timePerArrow + 15))));
 }
 
 function checkSolvable(list) {
@@ -803,9 +852,9 @@ const ctx = canvas.getContext('2d');
 
 function resizeCanvas() {
   const area = document.getElementById('boardArea');
-  const availW = Math.max(240, (area.clientWidth || window.innerWidth) - 24);
-  const availH = Math.max(240, (area.clientHeight || (window.innerHeight - 230)) - 24);
-  cellSize = Math.max(22, Math.floor(Math.min(availW / COLS, availH / ROWS, 38)));
+  const availW = Math.max(250, (area.clientWidth || window.innerWidth) - 16);
+  const availH = Math.max(250, (area.clientHeight || (window.innerHeight - 220)) - 16);
+  cellSize = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS, 40)));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const W = COLS * cellSize, H = ROWS * cellSize;
   canvas.style.width = W + 'px';
@@ -821,11 +870,11 @@ function drawMaze() {
   ctx.clearRect(0, 0, W, H);
 
   if (currentShapeObj) {
-    ctx.fillStyle = state.blackTheme ? 'rgba(255,255,255,0.05)' : 'rgba(27,33,45,0.05)';
+    ctx.fillStyle = state.blackTheme ? 'rgba(255,255,255,0.06)' : 'rgba(27,33,45,0.06)';
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (currentShapeObj.mask[r][c] === 1) {
-          ctx.beginPath(); ctx.arc(c * cellSize + cellSize / 2, r * cellSize + cellSize / 2, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(c * cellSize + cellSize / 2, r * cellSize + cellSize / 2, Math.max(1.5, cellSize * 0.06), 0, Math.PI * 2); ctx.fill();
         }
       }
     }
@@ -838,7 +887,7 @@ function drawMaze() {
     for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c * cellSize, 0); ctx.lineTo(c * cellSize, H); ctx.stroke(); }
   }
 
-  const lineW = Math.max(5, Math.floor(cellSize * 0.27));
+  const lineW = Math.max(4.5, Math.floor(cellSize * 0.28));
 
   for (const s of snakes) {
     if (s.cells.length === 0) continue;
@@ -868,7 +917,7 @@ function drawMaze() {
     ctx.lineTo(head[0] - DC[s.headDir] * (cellSize * 0.06), head[1] - DR[s.headDir] * (cellSize * 0.06));
     ctx.stroke();
 
-    const tip = cellSize * 0.27, base = -cellSize * 0.10, wing = Math.max(6.5, cellSize * 0.27);
+    const tip = cellSize * 0.28, base = -cellSize * 0.10, wing = Math.max(5.2, cellSize * 0.28);
     ctx.save();
     ctx.translate(head[0], head[1]);
     ctx.rotate([-Math.PI / 2, 0, Math.PI / 2, Math.PI][s.headDir]);
@@ -929,7 +978,7 @@ function slitherOut(s) {
       drawMaze(); updateHUD();
       if (snakes.length === 0) onLevelCompleted();
     }
-  }, 26);
+  }, 24);
 }
 
 function onLevelCompleted() {
