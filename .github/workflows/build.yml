@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > package.json
           {
             "name": "arrow-puzzle",
-            "version": "1.0.9",
+            "version": "1.1.0",
             "private": true,
             "dependencies": {
               "@capacitor/core": "^6.0.0",
@@ -57,7 +57,7 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Fullscreen, AdMob & SDK 36 (versionCode 10)
+      - name: Configure Fullscreen, AdMob, Official Meta SDK & SDK 36 (versionCode 11)
         run: |
           VARS="android/variables.gradle"
           if [ -f "$VARS" ]; then
@@ -66,6 +66,7 @@ jobs:
             sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' "$VARS"
           fi
 
+          # Added Official Facebook Core SDK (com.facebook.android:facebook-core:17.0.2) for automatic Meta Install Tracking
           cat << 'EOF' > android/app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -76,8 +77,8 @@ jobs:
                   applicationId "com.digitalkhel.arrowpuzzle"
                   minSdkVersion rootProject.ext.minSdkVersion
                   targetSdkVersion rootProject.ext.targetSdkVersion
-                  versionCode 10
-                  versionName "1.0.9"
+                  versionCode 11
+                  versionName "1.1.0"
                   testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
                   aaptOptions {
                       ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
@@ -112,6 +113,7 @@ jobs:
               implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
               implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
               implementation project(':capacitor-android')
+              implementation 'com.facebook.android:facebook-core:17.0.2'
               testImplementation "junit:junit:$junitVersion"
               androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
               androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
@@ -133,11 +135,16 @@ jobs:
           import androidx.core.view.WindowInsetsCompat;
           import androidx.core.view.WindowInsetsControllerCompat;
           import com.getcapacitor.BridgeActivity;
+          import com.facebook.FacebookSdk;
+          import com.facebook.appevents.AppEventsLogger;
 
           public class MainActivity extends BridgeActivity {
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+                  FacebookSdk.setAutoInitEnabled(true);
+                  FacebookSdk.fullyInitialize();
+                  AppEventsLogger.activateApp(getApplication());
                   if (getBridge() != null && getBridge().getWebView() != null) {
                       WebView wv = getBridge().getWebView();
                       WebSettings ws = wv.getSettings();
@@ -194,7 +201,7 @@ jobs:
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
             sed -i 's|<application|    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>\n    <application|g' "$MANIFEST"
-            sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n    </application>|g' "$MANIFEST"
+            sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-9990400518181461~1917528301"/>\n        <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>\n        <meta-data android:name="com.facebook.sdk.ClientToken" android:value="@string/facebook_client_token"/>\n        <meta-data android:name="com.facebook.sdk.AutoLogAppEventsEnabled" android:value="true"/>\n        <meta-data android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled" android:value="true"/>\n    </application>|g' "$MANIFEST"
           fi
 
           rm -rf android/app/src/main/res/mipmap-anydpi-v26
@@ -206,11 +213,16 @@ jobs:
             done
           fi
 
-      - name: Build Signed Release AAB & Signed Release APK
+      - name: Build Signed Release AAB & Signed Release APK + Print Meta Key Hash
         run: |
           if [ ! -f "release.keystore" ]; then
             keytool -genkey -v -keystore release.keystore -alias dkkey -keyalg RSA -keysize 2048 -validity 10000 -storepass digitalkhel123 -keypass digitalkhel123 -dname "CN=Digital Khel, O=Digital Khel, C=IN"
           fi
+
+          echo "=========================================="
+          echo "YOUR META KEY HASH FROM RELEASE.KEYSTORE:"
+          keytool -exportcert -alias dkkey -keystore release.keystore -storepass digitalkhel123 | openssl sha1 -binary | openssl base64
+          echo "=========================================="
 
           cd android
           chmod +x gradlew
@@ -219,7 +231,7 @@ jobs:
       - name: Upload Signed Release AAB & Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Digital-Khel-Arrow-Puzzle-PROGRESSIVE-v10
+          name: Digital-Khel-Arrow-Puzzle-META-SDK-v11
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*.apk
